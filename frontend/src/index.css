@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme {
+  /* ═══════════════════════════════════════════════════════
+     ARTISANA — Sıcak Bronz Renk Paleti
+     İki geliştirici de bu değişkenleri kullanacak
+  ═══════════════════════════════════════════════════════ */
+  
+  /* Temel Renkler */
+  --color-background: #fafafa;
+  --color-foreground: #171717;
+  --color-surface: #ffffff;
+  --color-border: #e5e5e5;
+  
+  /* Ana Renk (Primary) — Bronz/Altın */
+  --color-primary: #8b7355;
+  --color-primary-dark: #6b583f;
+  --color-primary-light: #a89070;
+  
+  /* İkincil Renk (Secondary) — Lacivert */
+  --color-secondary: #2c3e50;
+  --color-secondary-dark: #1a252f;
+  --color-secondary-light: #34495e;
+  
+  /* Vurgu Renkleri */
+  --color-accent: #d4a853;
+  --color-accent-light: #f0e6cc;
+  
+  /* Durum Renkleri */
+  --color-success: #27ae60;
+  --color-warning: #f39c12;
+  --color-error: #e74c3c;
+  --color-info: #3498db;
+  
+  /* Gri Tonları */
+  --color-muted: #6b7280;
+  --color-muted-light: #9ca3af;
+  --color-muted-bg: #f3f4f6;
+  
+  /* Tipografi */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  h1, h2, h3 {
+    @apply font-serif tracking-tight text-foreground;
+  }
+
+  h4, h5, h6 {
+    @apply font-sans font-semibold tracking-tight text-foreground;
+  }
+
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ORTAK ANIMASYONLAR — İki geliştirici de kullanabilir
+═══════════════════════════════════════════════════════ */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out forwards;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-muted-bg); }
+::-webkit-scrollbar-thumb { background: var(--color-primary-light); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
