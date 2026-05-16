@@ -161,9 +161,9 @@ const seed = async () => {
     await SupportTicket.create({
       user_id: 1,
       subject: 'Tablom Kırık Geldi',
-      category: 'Sipariş İadesi',
+      category: 'order',
       message: 'Merhaba, sipariş ettiğim tablo kargoda hasar görmüş.',
-      status: 'pending'
+      status: 'open'
     });
 
     console.log('✅ Veritabanı başarıyla test verileriyle dolduruldu!');
