@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Send, MessageSquare, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Send, MessageSquare, Clock, CheckCircle, AlertCircle, LifeBuoy } from 'lucide-react';
+import LiveChatWidget from '../components/LiveChatWidget';
 
 const ContactPage = () => {
   const [tickets, setTickets] = useState([]);
@@ -12,7 +13,7 @@ const ContactPage = () => {
   }, []);
 
   const fetchTickets = () => {
-    fetch('http://localhost:5001/api/support-tickets?user_id=1')
+    fetch('http://localhost:5000/api/support-tickets?user_id=1')
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -26,7 +27,7 @@ const ContactPage = () => {
     e.preventDefault();
     setSubmitStatus('loading');
 
-    fetch('http://localhost:5001/api/support-tickets', {
+    fetch('http://localhost:5000/api/support-tickets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...formData, user_id: 1 })
@@ -52,6 +53,36 @@ const ContactPage = () => {
       case 'resolved': return <span className="bg-success/10 text-success px-2 py-1 rounded-sm text-xs font-bold flex items-center gap-1"><CheckCircle size={12}/> Çözüldü</span>;
       default: return <span className="bg-muted-bg text-muted px-2 py-1 rounded-sm text-xs font-bold">Kapalı</span>;
     }
+  };
+
+  const getStatusProgress = (status) => {
+    const steps = [
+      { id: 'open', label: 'İletildi', color: 'bg-info', activeColor: 'text-info' },
+      { id: 'in_progress', label: 'İşleniyor', color: 'bg-warning', activeColor: 'text-warning' },
+      { id: 'resolved', label: 'Çözüldü', color: 'bg-success', activeColor: 'text-success' }
+    ];
+    
+    let currentIndex = 0;
+    if (status === 'in_progress') currentIndex = 1;
+    if (status === 'resolved' || status === 'closed') currentIndex = 2;
+
+    return (
+      <div className="mt-6 mb-2 bg-background p-4 rounded-lg border border-border shadow-inner">
+        <h4 className="text-xs font-bold text-muted mb-3 uppercase tracking-wider">Talep Durumu</h4>
+        <div className="flex justify-between mb-2">
+          {steps.map((step, idx) => (
+            <span key={step.id} className={`text-[10px] font-bold uppercase transition-colors ${idx <= currentIndex ? step.activeColor : 'text-muted/50'}`}>
+              {step.label}
+            </span>
+          ))}
+        </div>
+        <div className="flex gap-1 h-2 w-full bg-muted-bg rounded-full overflow-hidden">
+          {steps.map((step, idx) => (
+            <div key={step.id} className={`h-full flex-1 transition-all duration-700 ${idx <= currentIndex ? step.color : 'bg-transparent'}`}></div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -159,16 +190,21 @@ const ContactPage = () => {
                   </div>
                   <p className="text-sm text-foreground/80 line-clamp-2 mb-4">{ticket.message}</p>
                   
+                  {getStatusProgress(ticket.status)}
+                  
                   {ticket.admin_response && (
-                    <div className="bg-muted-bg p-3 rounded-sm text-sm border-l-4 border-primary mb-4">
-                      <strong className="text-primary block mb-1">Müşteri Hizmetleri:</strong>
-                      {ticket.admin_response}
+                    <div className="bg-muted-bg p-4 rounded-lg text-sm border-l-4 border-primary mt-4 flex gap-3">
+                      <LifeBuoy className="text-primary shrink-0" size={20} />
+                      <div>
+                        <strong className="text-primary block mb-1">Müşteri Temsilcisi Yanıtı:</strong>
+                        <p className="text-foreground">{ticket.admin_response}</p>
+                      </div>
                     </div>
                   )}
                   
-                  <div className="flex items-center justify-between text-xs text-muted pt-3 border-t border-border">
-                    <span className="uppercase tracking-wider">#{ticket.id} • {ticket.category}</span>
-                    <span>{new Date(ticket.created_at).toLocaleDateString('tr-TR')}</span>
+                  <div className="flex items-center justify-between text-xs text-muted pt-4 mt-4 border-t border-border">
+                    <span className="uppercase tracking-wider font-medium">Talep No: #{ticket.id} • {ticket.category}</span>
+                    <span className="font-medium">{new Date(ticket.created_at).toLocaleDateString('tr-TR')}</span>
                   </div>
                 </div>
               ))
@@ -176,6 +212,7 @@ const ContactPage = () => {
           </div>
         </div>
       </div>
+      <LiveChatWidget />
     </div>
   );
 };

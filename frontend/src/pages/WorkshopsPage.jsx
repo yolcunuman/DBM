@@ -11,7 +11,7 @@ const WorkshopsPage = () => {
 
   // Backend'den atölyeleri çek
   useEffect(() => {
-    fetch('http://localhost:5001/api/workshops')
+    fetch('http://localhost:5000/api/workshops')
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -37,7 +37,7 @@ const WorkshopsPage = () => {
       notes: 'Frontend üzerinden yapıldı'
     };
 
-    fetch('http://localhost:5001/api/reservations', {
+    fetch('http://localhost:5000/api/reservations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(reservationData)

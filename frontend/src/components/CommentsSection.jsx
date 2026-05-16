@@ -15,7 +15,7 @@ const CommentsSection = ({ targetType, targetId }) => {
 
   const fetchComments = () => {
     setLoading(true);
-    fetch(`http://localhost:5001/api/comments?target_type=${targetType}&target_id=${targetId}&sort=${sortBy}`)
+    fetch(`http://localhost:5000/api/comments?target_type=${targetType}&target_id=${targetId}&sort=${sortBy}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -48,7 +48,7 @@ const CommentsSection = ({ targetType, targetId }) => {
       rating: rating
     };
 
-    fetch('http://localhost:5001/api/comments', {
+    fetch('http://localhost:5000/api/comments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(commentData)
@@ -69,7 +69,7 @@ const CommentsSection = ({ targetType, targetId }) => {
   };
 
   const handleHelpful = (commentId) => {
-    fetch(`http://localhost:5001/api/comments/${commentId}/helpful`, { method: 'POST' })
+    fetch(`http://localhost:5000/api/comments/${commentId}/helpful`, { method: 'POST' })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
