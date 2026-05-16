@@ -21,6 +21,7 @@ const Navbar = () => {
     { name: 'Atölyeler', path: '/workshops', icon: <CalendarDays size={15} /> },
     { name: 'Sanatçılar', path: '/artists' },
     { name: 'İletişim', path: '/contact' },
+    { name: 'Admin Paneli', path: '/admin' },
   ];
 
   const isActive = (path) => location.pathname === path;

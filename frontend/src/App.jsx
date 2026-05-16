@@ -14,6 +14,7 @@ import FavoritesPage from './pages/FavoritesPage';
 import CartPage from './pages/CartPage';
 import ProfilePage from './pages/ProfilePage';
 import ArtistsPage from './pages/ArtistsPage';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
       <div className="min-h-screen flex flex-col bg-background font-sans">
         <Navbar />
         
-        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <main className="grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <Routes>
             {/* Ortak */}
             <Route path="/" element={<HomePage />} />
@@ -38,6 +39,7 @@ function App() {
             {/* ═══ Geliştirici 2: Atölyeler & Destek ═══ */}
             <Route path="/workshops" element={<WorkshopsPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </main>
 
