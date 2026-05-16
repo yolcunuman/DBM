@@ -13,7 +13,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [orderFilter, setOrderFilter] = useState('');
 
-  useEffect(() => {
+  const fetchDashboardData = () => {
     Promise.all([
       fetch(`${API_URL}/reports/dashboard`).then(r => r.json()),
       fetch(`${API_URL}/orders/all`).then(r => r.json()),
@@ -32,6 +32,10 @@ const AdminDashboard = () => {
         setError('Sunucu bağlantı hatası.');
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
   }, []);
 
   const handleReply = (ticketId) => {
@@ -48,10 +52,7 @@ const AdminDashboard = () => {
       if (data.success) {
         setTickets(tickets.map(t => t.id === ticketId ? { ...t, admin_response: text, status: 'resolved' } : t));
         setReplyText(prev => ({...prev, [ticketId]: ''}));
-        setStats(prev => ({
-          ...prev, 
-          kpi: { ...prev.kpi, open_tickets: Math.max(0, prev.kpi.open_tickets - 1) }
-        }));
+        fetchDashboardData(); // Tüm istatistikleri ve KPI'ları yenile
       }
     });
   };
@@ -66,6 +67,7 @@ const AdminDashboard = () => {
       .then(data => {
         if (data.success) {
           setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+          fetchDashboardData(); // Tüm istatistikleri ve sipariş durum çubuklarını yenile
         }
       });
   };
