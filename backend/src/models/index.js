@@ -14,6 +14,8 @@ const SupportTicket = require('./SupportTicket');
 // Geliştirici 1'in modelleri (İlişkiler için placeholder)
 const User = require('./User');
 const Artwork = require('./Artwork');
+const Favorite = require('./Favorite');
+const Order = require('./Order');
 
 // ─── İlişkiler ──────────────────────────────────
 
@@ -52,6 +54,22 @@ Artwork.hasMany(Comment, {
 });
 Comment.belongsTo(Artwork, { foreignKey: 'target_id', constraints: false, as: 'artwork' });
 
+// 6. User <-> Favorite (1:N)
+User.hasMany(Favorite, { foreignKey: 'user_id', as: 'favorites', onDelete: 'CASCADE' });
+Favorite.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+// 7. Artwork <-> Favorite (1:N)
+Artwork.hasMany(Favorite, { foreignKey: 'artwork_id', as: 'favorites', onDelete: 'CASCADE' });
+Favorite.belongsTo(Artwork, { foreignKey: 'artwork_id', as: 'artwork' });
+
+// 8. User <-> Order (1:N)
+User.hasMany(Order, { foreignKey: 'user_id', as: 'orders', onDelete: 'CASCADE' });
+Order.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+// 9. Artwork <-> Order (1:N)
+Artwork.hasMany(Order, { foreignKey: 'artwork_id', as: 'orders', onDelete: 'CASCADE' });
+Order.belongsTo(Artwork, { foreignKey: 'artwork_id', as: 'artwork' });
+
 module.exports = {
   sequelize,
   Workshop,
@@ -59,5 +77,7 @@ module.exports = {
   Comment,
   SupportTicket,
   User,
-  Artwork
+  Artwork,
+  Favorite,
+  Order
 };

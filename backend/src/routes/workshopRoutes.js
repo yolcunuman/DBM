@@ -6,8 +6,10 @@
 const express = require('express');
 const router = express.Router();
 const {
+  seedWorkshops,
   getAllWorkshops,
   getWorkshopById,
+  getWorkshopCategories,
   createWorkshop,
   updateWorkshop,
   deleteWorkshop,
@@ -16,6 +18,12 @@ const {
   updateReservation,
   cancelReservation,
 } = require('../controllers/workshopController');
+
+// ─── Seed ───────────────────────────────────────
+router.post('/workshops/seed', seedWorkshops);
+
+// ─── Kategoriler ────────────────────────────────
+router.get('/workshops/categories', getWorkshopCategories);
 
 // ─── Atölye Endpoint'leri ───────────────────────
 router.get('/workshops', getAllWorkshops);

@@ -1,4 +1,8 @@
-const { Workshop, Reservation, Comment, SupportTicket } = require('../models');
+// ═══════════════════════════════════════════════
+//  Report Controller — Yönetici Rapor & İstatistik
+// ═══════════════════════════════════════════════
+
+const { Workshop, Reservation, Comment, SupportTicket, Artwork, Order, Favorite } = require('../models');
 const { fn, col } = require('sequelize');
 
 const getAdminDashboardStats = async (req, res) => {
@@ -36,6 +40,25 @@ const getAdminDashboardStats = async (req, res) => {
     // 3. Yorum İstatistikleri
     const totalComments = await Comment.count();
 
+    // 4. Eser İstatistikleri
+    const totalArtworks = await Artwork.count();
+    const availableArtworks = await Artwork.count({ where: { is_available: true } });
+
+    // 5. Sipariş İstatistikleri
+    const totalOrders = await Order.count();
+    const pendingOrders = await Order.count({ where: { status: 'pending' } });
+    const confirmedOrders = await Order.count({ where: { status: 'confirmed' } });
+    const shippedOrders = await Order.count({ where: { status: 'shipped' } });
+    const deliveredOrders = await Order.count({ where: { status: 'delivered' } });
+    const cancelledOrders = await Order.count({ where: { status: 'cancelled' } });
+
+    // Toplam satış geliri
+    const orders = await Order.findAll({ where: { status: ['confirmed', 'shipped', 'delivered'] } });
+    const totalSalesRevenue = orders.reduce((sum, o) => sum + parseFloat(o.total_price), 0);
+
+    // 6. Favori İstatistikleri
+    const totalFavorites = await Favorite.count();
+
     res.json({
       success: true,
       data: {
@@ -45,7 +68,18 @@ const getAdminDashboardStats = async (req, res) => {
           average_occupancy: averageOccupancy,
           estimated_revenue: totalRevenue,
           open_tickets: openTicketsCount,
-          total_comments: totalComments
+          total_comments: totalComments,
+          // Yeni eklenen eser istatistikleri
+          total_artworks: totalArtworks,
+          available_artworks: availableArtworks,
+          total_orders: totalOrders,
+          pending_orders: pendingOrders,
+          confirmed_orders: confirmedOrders,
+          shipped_orders: shippedOrders,
+          delivered_orders: deliveredOrders,
+          cancelled_orders: cancelledOrders,
+          total_sales_revenue: totalSalesRevenue,
+          total_favorites: totalFavorites
         },
         workshops: workshopStats
       }

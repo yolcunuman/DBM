@@ -13,6 +13,9 @@ const workshopRoutes = require('./routes/workshopRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const supportRoutes = require('./routes/supportRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const artworkRoutes = require('./routes/artworkRoutes');
+const favoriteRoutes = require('./routes/favoriteRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,6 +33,9 @@ app.use('/api', workshopRoutes);
 app.use('/api', commentRoutes);
 app.use('/api', supportRoutes);
 app.use('/api', reportRoutes);
+app.use('/api', artworkRoutes);
+app.use('/api', favoriteRoutes);
+app.use('/api', orderRoutes);
 
 // ─── Sağlık Kontrolü ───────────────────────────
 app.get('/api/health', (req, res) => {
@@ -53,6 +59,18 @@ const startServer = async () => {
     // Tabloları oluştur (varsa dokunmaz)
     await sequelize.sync();
     console.log('✅ Veritabanı tabloları senkronize edildi!');
+
+    // Eserler boşsa otomatik seed (arkadaşın projeyi çektiğinde de çalışsın)
+    const { Artwork } = require('./models');
+    const artworkCount = await Artwork.count();
+    if (artworkCount === 0) {
+      const { seedArtworks } = require('./controllers/artworkController');
+      // Fake req/res ile seed fonksiyonunu çağır
+      await seedArtworks(
+        {},
+        { status: () => ({ json: (d) => console.log(`🎨 ${d.message}`) }), json: (d) => console.log(`🎨 ${d.message}`) }
+      );
+    }
 
     // Sunucuyu başlat
     app.listen(PORT, () => {
