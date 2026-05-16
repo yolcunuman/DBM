@@ -6,6 +6,7 @@ import Footer from './components/Footer';
 // Pages
 import HomePage from './pages/HomePage';
 import ArtworksPage from './pages/ArtworksPage';
+import ArtworkDetailPage from './pages/ArtworkDetailPage';
 import WorkshopsPage from './pages/WorkshopsPage';
 import ContactPage from './pages/ContactPage';
 import LoginPage from './pages/LoginPage';
@@ -29,6 +30,7 @@ function App() {
 
             {/* ═══ Geliştirici 1: Eserler & E-Ticaret ═══ */}
             <Route path="/artworks" element={<ArtworksPage />} />
+            <Route path="/artworks/:id" element={<ArtworkDetailPage />} />
             <Route path="/artists" element={<ArtistsPage />} />
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/cart" element={<CartPage />} />
