@@ -3,7 +3,7 @@
 //  Geliştirici 2 — Madde 12, 13, 14, 15
 // ═══════════════════════════════════════════════
 
-const { Comment } = require('../models');
+const { Comment, User } = require('../models');
 const { Op } = require('sequelize');
 
 // GET /api/comments?target_type=workshop&target_id=1&sort=newest
@@ -36,7 +36,11 @@ const getComments = async (req, res) => {
         break;
     }
 
-    const comments = await Comment.findAll({ where, order });
+    const comments = await Comment.findAll({ 
+      where, 
+      order,
+      include: [{ model: User, as: 'user', attributes: ['name'] }]
+    });
 
     // Ortalama puan hesapla (Madde 13)
     const avgResult = await Comment.findOne({
@@ -65,7 +69,10 @@ const getComments = async (req, res) => {
 // POST /api/comments — Yorum yap
 const createComment = async (req, res) => {
   try {
-    const { user_id, target_type, target_id, content, rating } = req.body;
+    const { target_type, target_id, content, rating } = req.body;
+    
+    // Güvenlik: user_id'yi body'den değil, giriş yapmış kullanıcının token'ından (req.user) alıyoruz.
+    const user_id = req.user.id;
 
     const comment = await Comment.create({
       user_id, target_type, target_id, content, rating,
@@ -110,7 +117,7 @@ const deleteComment = async (req, res) => {
   }
 };
 
-// POST /api/comments/:id/helpful — Faydalı oyu ver (Madde 13)
+// POST /api/comments/:id/helpful — Faydalı oyu ver/geri al (Madde 13)
 const markHelpful = async (req, res) => {
   try {
     const comment = await Comment.findByPk(req.params.id);
@@ -118,13 +125,19 @@ const markHelpful = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Yorum bulunamadı.' });
     }
 
-    await comment.increment('helpful_count', { by: 1 });
+    if (req.body.action === 'decrement') {
+      if (comment.helpful_count > 0) {
+        await comment.decrement('helpful_count', { by: 1 });
+      }
+    } else {
+      await comment.increment('helpful_count', { by: 1 });
+    }
     await comment.reload();
 
-    res.json({ success: true, data: { helpful_count: comment.helpful_count }, message: 'Oy başarıyla verildi.' });
+    res.json({ success: true, data: { helpful_count: comment.helpful_count }, message: 'Oy başarıyla güncellendi.' });
   } catch (error) {
     console.error('markHelpful error:', error);
-    res.status(500).json({ success: false, message: 'Oy verilirken hata oluştu.' });
+    res.status(500).json({ success: false, message: 'Oy güncellenirken hata oluştu.' });
   }
 };
 

@@ -16,6 +16,7 @@ const reportRoutes = require('./routes/reportRoutes');
 const artworkRoutes = require('./routes/artworkRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -36,6 +37,7 @@ app.use('/api', reportRoutes);
 app.use('/api', artworkRoutes);
 app.use('/api', favoriteRoutes);
 app.use('/api', orderRoutes);
+app.use('/api/auth', authRoutes);
 
 // ─── Sağlık Kontrolü ───────────────────────────
 app.get('/api/health', (req, res) => {
@@ -56,8 +58,14 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✅ PostgreSQL bağlantısı başarılı!');
 
-    // Tabloları oluştur (varsa dokunmaz)
+    // Tabloları oluştur
     await sequelize.sync();
+    try {
+      await sequelize.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255);`);
+      await sequelize.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'USER';`);
+    } catch (e) {
+      console.log('Alter table warning:', e.message);
+    }
     console.log('✅ Veritabanı tabloları senkronize edildi!');
 
     // Eserler boşsa otomatik seed (arkadaşın projeyi çektiğinde de çalışsın)

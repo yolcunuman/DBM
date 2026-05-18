@@ -19,6 +19,8 @@ const {
   cancelReservation,
 } = require('../controllers/workshopController');
 
+const { protect, adminOnly } = require('../middleware/authMiddleware');
+
 // ─── Seed ───────────────────────────────────────
 router.post('/workshops/seed', seedWorkshops);
 
@@ -28,14 +30,14 @@ router.get('/workshops/categories', getWorkshopCategories);
 // ─── Atölye Endpoint'leri ───────────────────────
 router.get('/workshops', getAllWorkshops);
 router.get('/workshops/:id', getWorkshopById);
-router.post('/workshops', createWorkshop);
-router.put('/workshops/:id', updateWorkshop);
-router.delete('/workshops/:id', deleteWorkshop);
+router.post('/workshops', protect, adminOnly, createWorkshop);
+router.put('/workshops/:id', protect, adminOnly, updateWorkshop);
+router.delete('/workshops/:id', protect, adminOnly, deleteWorkshop);
 
 // ─── Rezervasyon Endpoint'leri ──────────────────
-router.post('/reservations', createReservation);
-router.get('/reservations', getReservations);
-router.put('/reservations/:id', updateReservation);
-router.delete('/reservations/:id', cancelReservation);
+router.post('/reservations', protect, createReservation);
+router.get('/reservations', protect, getReservations);
+router.put('/reservations/:id', protect, updateReservation);
+router.delete('/reservations/:id', protect, cancelReservation);
 
 module.exports = router;

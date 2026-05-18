@@ -22,7 +22,7 @@ const AdminDashboard = () => {
       .then(([statsData, ordersData, ticketsData]) => {
         if (statsData.success) setStats(statsData.data);
         else setError('Veriler alınamadı.');
-        
+
         if (ordersData.success) setOrders(ordersData.data);
         if (ticketsData.success) setTickets(ticketsData.data);
         setLoading(false);
@@ -47,14 +47,14 @@ const AdminDashboard = () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ admin_response: text, status: 'resolved' })
     })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        setTickets(tickets.map(t => t.id === ticketId ? { ...t, admin_response: text, status: 'resolved' } : t));
-        setReplyText(prev => ({...prev, [ticketId]: ''}));
-        fetchDashboardData(); // Tüm istatistikleri ve KPI'ları yenile
-      }
-    });
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setTickets(tickets.map(t => t.id === ticketId ? { ...t, admin_response: text, status: 'resolved' } : t));
+          setReplyText(prev => ({ ...prev, [ticketId]: '' }));
+          fetchDashboardData(); // Tüm istatistikleri ve KPI'ları yenile
+        }
+      });
   };
 
   const updateOrderStatus = (orderId, newStatus) => {
@@ -74,11 +74,11 @@ const AdminDashboard = () => {
 
   const getStatusBadge = (status) => {
     const map = {
-      pending: { label: 'Bekliyor', bg: 'bg-warning/10', text: 'text-warning', icon: <Clock size={12}/> },
-      confirmed: { label: 'Onaylandı', bg: 'bg-info/10', text: 'text-info', icon: <CheckCircle size={12}/> },
-      shipped: { label: 'Kargoda', bg: 'bg-primary/10', text: 'text-primary', icon: <Truck size={12}/> },
-      delivered: { label: 'Teslim', bg: 'bg-success/10', text: 'text-success', icon: <CheckCircle size={12}/> },
-      cancelled: { label: 'İptal', bg: 'bg-error/10', text: 'text-error', icon: <XCircle size={12}/> }
+      pending: { label: 'Bekliyor', bg: 'bg-warning/10', text: 'text-warning', icon: <Clock size={12} /> },
+      confirmed: { label: 'Onaylandı', bg: 'bg-info/10', text: 'text-info', icon: <CheckCircle size={12} /> },
+      shipped: { label: 'Kargoda', bg: 'bg-primary/10', text: 'text-primary', icon: <Truck size={12} /> },
+      delivered: { label: 'Teslim', bg: 'bg-success/10', text: 'text-success', icon: <CheckCircle size={12} /> },
+      cancelled: { label: 'İptal', bg: 'bg-error/10', text: 'text-error', icon: <XCircle size={12} /> }
     };
     const s = map[status] || map.pending;
     return <span className={`inline-flex items-center gap-1 ${s.bg} ${s.text} px-2 py-1 rounded-sm text-xs font-bold`}>{s.icon} {s.label}</span>;
@@ -103,17 +103,16 @@ const AdminDashboard = () => {
       {/* Tab Navigation */}
       <div className="flex gap-1 bg-muted-bg p-1 rounded-lg flex-wrap">
         {[
-          { id: 'overview', label: 'Genel Bakış', icon: <BarChart3 size={16}/> },
-          { id: 'orders', label: 'Sipariş Yönetimi', icon: <Package size={16}/> },
-          { id: 'workshops', label: 'Atölye Raporu', icon: <Briefcase size={16}/> },
-          { id: 'tickets', label: 'Destek Talepleri', icon: <Ticket size={16}/> }
+          { id: 'overview', label: 'Genel Bakış', icon: <BarChart3 size={16} /> },
+          { id: 'orders', label: 'Sipariş Yönetimi', icon: <Package size={16} /> },
+          { id: 'workshops', label: 'Atölye Raporu', icon: <Briefcase size={16} /> },
+          { id: 'tickets', label: 'Destek Talepleri', icon: <Ticket size={16} /> }
         ].map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
-              activeTab === tab.id ? 'bg-surface text-primary shadow-sm' : 'text-muted hover:text-foreground'
-            }`}
+            className={`flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${activeTab === tab.id ? 'bg-surface text-primary shadow-sm' : 'text-muted hover:text-foreground'
+              }`}
           >
             {tab.icon} {tab.label}
           </button>
@@ -240,7 +239,7 @@ const AdminDashboard = () => {
               ].map(item => (
                 <div key={item.label} className="text-center">
                   <div className="h-24 bg-muted-bg rounded-lg flex items-end justify-center p-2 mb-2">
-                    <div 
+                    <div
                       className={`w-full ${item.color} rounded-t-md transition-all`}
                       style={{ height: `${kpi.total_orders > 0 ? Math.max(((item.count || 0) / kpi.total_orders) * 100, 5) : 5}%` }}
                     ></div>
@@ -270,9 +269,8 @@ const AdminDashboard = () => {
               <button
                 key={f.value}
                 onClick={() => setOrderFilter(f.value)}
-                className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
-                  orderFilter === f.value ? 'bg-primary text-white' : 'bg-surface border border-border text-foreground/70 hover:border-primary'
-                }`}
+                className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${orderFilter === f.value ? 'bg-primary text-white' : 'bg-surface border border-border text-foreground/70 hover:border-primary'
+                  }`}
               >
                 {f.label}
               </button>
@@ -349,7 +347,7 @@ const AdminDashboard = () => {
             <h2 className="font-bold text-secondary">Atölye Doluluk Raporu</h2>
             <span className="text-xs font-medium bg-white px-2 py-1 rounded-sm border border-border">Toplam: {kpi.total_workshops} Atölye</span>
           </div>
-          
+
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-background text-muted uppercase text-xs">
@@ -371,8 +369,8 @@ const AdminDashboard = () => {
                       <div className="flex items-center gap-3">
                         <span className="w-12">{w.occupancy_rate}%</span>
                         <div className="w-24 h-2 bg-muted-bg rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full ${w.occupancy_rate >= 100 ? 'bg-error' : w.occupancy_rate > 70 ? 'bg-success' : 'bg-primary'}`} 
+                          <div
+                            className={`h-full ${w.occupancy_rate >= 100 ? 'bg-error' : w.occupancy_rate > 70 ? 'bg-success' : 'bg-primary'}`}
                             style={{ width: `${Math.min(w.occupancy_rate, 100)}%` }}
                           ></div>
                         </div>
@@ -406,10 +404,10 @@ const AdminDashboard = () => {
           <div className="px-6 py-4 border-b border-border bg-muted-bg/50 flex justify-between items-center">
             <h2 className="font-bold text-secondary flex items-center gap-2"><Ticket className="text-warning" size={20} /> Bekleyen Destek Talepleri</h2>
           </div>
-          
+
           <div className="p-6 space-y-4">
             {tickets.filter(t => t.status !== 'resolved' && t.status !== 'closed').length === 0 ? (
-               <div className="text-center text-muted py-8 bg-background rounded-lg border border-dashed border-border">Bekleyen destek talebi bulunmuyor. 🎉</div>
+              <div className="text-center text-muted py-8 bg-background rounded-lg border border-dashed border-border">Bekleyen destek talebi bulunmuyor. 🎉</div>
             ) : (
               tickets.filter(t => t.status !== 'resolved' && t.status !== 'closed').map(ticket => (
                 <div key={ticket.id} className="border border-border rounded-lg p-5 bg-background shadow-sm hover:shadow transition-shadow">
@@ -423,19 +421,19 @@ const AdminDashboard = () => {
                   <div className="bg-muted-bg/40 p-4 rounded-md mb-4 border border-border">
                     <p className="text-sm text-foreground/90">{ticket.message}</p>
                   </div>
-                  
+
                   <div className="flex gap-3 items-end">
                     <div className="flex-1">
                       <label className="block text-xs font-medium text-primary mb-1">Müşteriye Yanıtınız (Talebi Çözüldü Olarak İşaretler)</label>
-                      <textarea 
+                      <textarea
                         className="w-full px-3 py-2 border border-border rounded-md text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none resize-none bg-surface"
                         rows="2"
                         placeholder="Buraya yazacağınız yanıt müşterinin iletişim sayfasında görünecektir..."
                         value={replyText[ticket.id] || ''}
-                        onChange={(e) => setReplyText({...replyText, [ticket.id]: e.target.value})}
+                        onChange={(e) => setReplyText({ ...replyText, [ticket.id]: e.target.value })}
                       ></textarea>
                     </div>
-                    <button 
+                    <button
                       onClick={() => handleReply(ticket.id)}
                       disabled={!replyText[ticket.id]}
                       className="bg-primary text-white px-5 py-2 h-[58px] rounded-md text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"

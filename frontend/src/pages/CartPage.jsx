@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Trash2, CreditCard, Truck, Palette, CheckCircle } from 'lucide-react';
 
-const API_URL = 'http://localhost:5001/api';
+const API_URL = 'http://localhost:5000/api';
 
 const CartPage = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const currentUserId = user ? user.id : 1;
 
   const fetchOrders = () => {
     setLoading(true);
-    fetch(`${API_URL}/orders?user_id=1`)
+    fetch(`${API_URL}/orders?user_id=${currentUserId}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) setOrders(data.data);

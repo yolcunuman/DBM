@@ -4,16 +4,21 @@ import LiveChatWidget from '../components/LiveChatWidget';
 
 const ContactPage = () => {
   const [tickets, setTickets] = useState([]);
-  const [formData, setFormData] = useState({ subject: '', category: 'general', priority: 'medium', message: '' });
+  const [formData, setFormData] = useState({ subject: '', category: 'general', message: '' });
   const [submitStatus, setSubmitStatus] = useState('');
 
-  // Backend'den geçmiş talepleri çek (dummy user_id = 1)
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+
+  // Backend'den geçmiş talepleri çek
   useEffect(() => {
-    fetchTickets();
+    if (user) {
+      fetchTickets();
+    }
   }, []);
 
   const fetchTickets = () => {
-    fetch('http://localhost:5000/api/support-tickets?user_id=1')
+    fetch(`http://localhost:5000/api/support-tickets?user_id=${user.id}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -30,13 +35,13 @@ const ContactPage = () => {
     fetch('http://localhost:5000/api/support-tickets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...formData, user_id: 1 })
+      body: JSON.stringify({ ...formData, user_id: user ? user.id : null })
     })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
           setSubmitStatus('success');
-          setFormData({ subject: '', category: 'general', priority: 'medium', message: '' });
+          setFormData({ subject: '', category: 'general', message: '' });
           fetchTickets(); // Listeyi yenile
           setTimeout(() => setSubmitStatus(''), 3000);
         } else {
@@ -112,32 +117,18 @@ const ContactPage = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Kategori</label>
-                <select 
-                  value={formData.category}
-                  onChange={e => setFormData({...formData, category: e.target.value})}
-                  className="w-full px-4 py-2 border border-border rounded-sm focus:outline-none focus:border-primary bg-background"
-                >
-                  <option value="general">Genel Soru</option>
-                  <option value="order">Sipariş & Eserler</option>
-                  <option value="reservation">Atölye & Rezervasyon</option>
-                  <option value="technical">Teknik Sorun</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Öncelik</label>
-                <select 
-                  value={formData.priority}
-                  onChange={e => setFormData({...formData, priority: e.target.value})}
-                  className="w-full px-4 py-2 border border-border rounded-sm focus:outline-none focus:border-primary bg-background"
-                >
-                  <option value="low">Düşük</option>
-                  <option value="medium">Normal</option>
-                  <option value="high">Yüksek (Acil)</option>
-                </select>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">Kategori</label>
+              <select 
+                value={formData.category}
+                onChange={e => setFormData({...formData, category: e.target.value})}
+                className="w-full px-4 py-2 border border-border rounded-sm focus:outline-none focus:border-primary bg-background"
+              >
+                <option value="general">Genel Soru</option>
+                <option value="order">Sipariş & Eserler</option>
+                <option value="reservation">Atölye & Rezervasyon</option>
+                <option value="technical">Teknik Sorun</option>
+              </select>
             </div>
 
             <div>
@@ -177,7 +168,11 @@ const ContactPage = () => {
           <h2 className="text-2xl font-serif font-bold text-secondary">Geçmiş Talepleriniz</h2>
           
           <div className="space-y-4">
-            {tickets.length === 0 ? (
+            {!user ? (
+              <div className="text-muted bg-muted-bg/50 p-6 rounded-lg text-center border border-dashed border-border">
+                Geçmiş taleplerinizi görmek için <a href="/login" className="text-primary hover:underline">giriş yapmalısınız</a>.
+              </div>
+            ) : tickets.length === 0 ? (
               <div className="text-muted bg-muted-bg/50 p-6 rounded-lg text-center border border-dashed border-border">
                 Henüz bir destek talebi oluşturmadınız.
               </div>

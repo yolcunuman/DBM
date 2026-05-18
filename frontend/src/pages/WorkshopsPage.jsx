@@ -164,8 +164,8 @@ const WorkshopsPage = () => {
 
       {/* Detay Modalı */}
       {selectedWorkshop && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-surface rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 md:pt-24 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface rounded-xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto animate-scale-in">
             {/* Modal Üst: Görsel + Başlık */}
             <div className="relative h-56 bg-muted-bg">
               {selectedWorkshop.image_url

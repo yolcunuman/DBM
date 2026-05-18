@@ -14,11 +14,13 @@ const {
   adminReply,
 } = require('../controllers/commentController');
 
+const { protect, adminOnly } = require('../middleware/authMiddleware');
+
 router.get('/comments', getComments);
-router.post('/comments', createComment);
-router.put('/comments/:id', updateComment);
-router.delete('/comments/:id', deleteComment);
-router.post('/comments/:id/helpful', markHelpful);
-router.put('/comments/:id/reply', adminReply);
+router.post('/comments', protect, createComment);
+router.put('/comments/:id', protect, updateComment);
+router.delete('/comments/:id', protect, deleteComment);
+router.post('/comments/:id/helpful', protect, markHelpful);
+router.put('/comments/:id/reply', protect, adminOnly, adminReply);
 
 module.exports = router;

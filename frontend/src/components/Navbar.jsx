@@ -5,13 +5,36 @@ import { ShoppingCart, User, Menu, X, Palette, CalendarDays, Search, Heart } fro
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [user, setUser] = useState(null);
   const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    // Check initial user
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) setUser(JSON.parse(savedUser));
+    
+    // Listen for storage events (login/logout)
+    const handleStorageChange = () => {
+      const updatedUser = localStorage.getItem('user');
+      setUser(updatedUser ? JSON.parse(updatedUser) : null);
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    window.dispatchEvent(new Event("storage"));
+  };
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
@@ -20,9 +43,15 @@ const Navbar = () => {
     { name: 'Eserler', path: '/artworks', icon: <Palette size={15} /> },
     { name: 'Atölyeler', path: '/workshops', icon: <CalendarDays size={15} /> },
     { name: 'Sanatçılar', path: '/artists' },
-    { name: 'İletişim', path: '/contact' },
-    { name: 'Admin Paneli', path: '/admin' },
   ];
+  
+  if (user?.role !== 'ADMIN') {
+    navLinks.push({ name: 'İletişim', path: '/contact' });
+  }
+
+  if (user?.role === 'ADMIN') {
+    navLinks.push({ name: 'Admin Paneli', path: '/admin' });
+  }
 
   const isActive = (path) => location.pathname === path;
 
@@ -79,12 +108,23 @@ const Navbar = () => {
 
             <div className="h-8 w-px bg-border mx-2"></div>
             
-            <Link to="/login" className="text-sm font-medium text-foreground/80 hover:text-primary px-3 py-2 rounded-sm transition-all">
-              Giriş Yap
-            </Link>
-            <Link to="/register" className="text-sm font-medium bg-primary text-white px-5 py-2.5 rounded-sm hover:bg-primary-dark transition-all">
-              Kayıt Ol
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">Hoş geldin, {user.name}</span>
+                <button onClick={handleLogout} className="text-sm font-medium text-red-500 hover:text-red-600 px-3 py-2 rounded-sm transition-all">
+                  Çıkış Yap
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link to="/login" className="text-sm font-medium text-foreground/80 hover:text-primary px-3 py-2 rounded-sm transition-all">
+                  Giriş Yap
+                </Link>
+                <Link to="/register" className="text-sm font-medium bg-primary text-white px-5 py-2.5 rounded-sm hover:bg-primary-dark transition-all">
+                  Kayıt Ol
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -126,12 +166,20 @@ const Navbar = () => {
                 <ShoppingCart size={18} /> Sepet
               </Link>
             </div>
-            <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full text-center border border-border py-2.5 rounded-sm font-medium hover:border-primary transition-all">
-              Giriş Yap
-            </Link>
-            <Link to="/register" onClick={() => setIsMobileMenuOpen(false)} className="w-full text-center bg-primary text-white py-2.5 rounded-sm font-medium hover:bg-primary-dark transition-all">
-              Kayıt Ol
-            </Link>
+            {user ? (
+              <button onClick={handleLogout} className="w-full text-center text-red-500 border border-red-500 py-2.5 rounded-sm font-medium hover:bg-red-50 transition-all">
+                Çıkış Yap
+              </button>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full text-center border border-border py-2.5 rounded-sm font-medium hover:border-primary transition-all">
+                  Giriş Yap
+                </Link>
+                <Link to="/register" onClick={() => setIsMobileMenuOpen(false)} className="w-full text-center bg-primary text-white py-2.5 rounded-sm font-medium hover:bg-primary-dark transition-all">
+                  Kayıt Ol
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -2,16 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Heart, Trash2, ShoppingCart, Eye, Palette } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const API_URL = 'http://localhost:5001/api';
+const API_URL = 'http://localhost:5000/api';
 
 const FavoritesPage = () => {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [orderStatuses, setOrderStatuses] = useState({});
+  
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const currentUserId = user ? user.id : 1;
 
   const fetchFavorites = () => {
     setLoading(true);
-    fetch(`${API_URL}/favorites?user_id=1`)
+    fetch(`${API_URL}/favorites?user_id=${currentUserId}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) setFavorites(data.data);
@@ -39,7 +43,7 @@ const FavoritesPage = () => {
     fetch(`${API_URL}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: 1, artwork_id: artworkId, quantity: 1 })
+      body: JSON.stringify({ user_id: currentUserId, artwork_id: artworkId, quantity: 1 })
     })
       .then(res => res.json())
       .then(data => {

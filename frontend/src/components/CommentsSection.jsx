@@ -12,6 +12,16 @@ const CommentsSection = ({ targetType, targetId }) => {
   const [hoverRating, setHoverRating] = useState(0);
   const [submitStatus, setSubmitStatus] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [votedComments, setVotedComments] = useState([]);
+  
+  const token = localStorage.getItem('token');
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+
+  useEffect(() => {
+    const savedVotes = localStorage.getItem('votedComments');
+    if (savedVotes) setVotedComments(JSON.parse(savedVotes));
+  }, []);
 
   const fetchComments = () => {
     setLoading(true);
@@ -36,12 +46,14 @@ const CommentsSection = ({ targetType, targetId }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!token) {
+      setSubmitStatus('error');
+      return;
+    }
     
     setSubmitStatus('loading');
     
     const commentData = {
-      user_id: 1, // Dummy user (Geliştirici 1 auth sistemini yazana kadar)
       target_type: targetType,
       target_id: targetId,
       content: newComment,
@@ -50,7 +62,10 @@ const CommentsSection = ({ targetType, targetId }) => {
 
     fetch('http://localhost:5000/api/comments', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(commentData)
     })
       .then(res => res.json())
@@ -69,10 +84,31 @@ const CommentsSection = ({ targetType, targetId }) => {
   };
 
   const handleHelpful = (commentId) => {
-    fetch(`http://localhost:5000/api/comments/${commentId}/helpful`, { method: 'POST' })
+    if (!token) return alert('Oy vermek için giriş yapmalısınız.');
+    
+    const hasVoted = votedComments.includes(commentId);
+    const action = hasVoted ? 'decrement' : 'increment';
+
+    fetch(`http://localhost:5000/api/comments/${commentId}/helpful`, { 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ action })
+    })
       .then(res => res.json())
       .then(data => {
         if (data.success) {
+          let newVotes;
+          if (hasVoted) {
+            newVotes = votedComments.filter(id => id !== commentId);
+          } else {
+            newVotes = [...votedComments, commentId];
+          }
+          setVotedComments(newVotes);
+          localStorage.setItem('votedComments', JSON.stringify(newVotes));
+
           setComments(comments.map(c => 
             c.id === commentId ? { ...c, helpful_count: data.data.helpful_count } : c
           ));
@@ -123,38 +159,44 @@ const CommentsSection = ({ targetType, targetId }) => {
       </div>
 
       {/* Yorum Yapma Formu */}
-      <div className="bg-surface border border-border p-5 rounded-lg mb-8 shadow-sm">
-        <h4 className="font-bold text-foreground mb-4">Değerlendirmenizi Paylaşın</h4>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex items-center gap-4 mb-2">
-            <span className="text-sm font-medium text-foreground/80">Puanınız:</span>
-            <div className="flex gap-1">{renderStars(0, true)}</div>
-          </div>
-          
-          <textarea 
-            rows="3" 
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Düşüncelerinizi buraya yazın..."
-            className="w-full px-4 py-3 border border-border rounded-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none bg-background text-sm"
-            required
-          ></textarea>
-          
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              {submitStatus === 'success' && <span className="text-success">Yorumunuz başarıyla eklendi!</span>}
-              {submitStatus === 'error' && <span className="text-error">Bir hata oluştu.</span>}
+      {user ? (
+        <div className="bg-surface border border-border p-5 rounded-lg mb-8 shadow-sm">
+          <h4 className="font-bold text-foreground mb-4">Değerlendirmenizi Paylaşın</h4>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex items-center gap-4 mb-2">
+              <span className="text-sm font-medium text-foreground/80">Puanınız:</span>
+              <div className="flex gap-1">{renderStars(0, true)}</div>
             </div>
-            <button 
-              type="submit" 
-              disabled={submitStatus === 'loading'}
-              className="px-6 py-2 bg-primary text-white rounded-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-70 text-sm"
-            >
-              {submitStatus === 'loading' ? 'Gönderiliyor...' : 'Yorumu Gönder'}
-            </button>
-          </div>
-        </form>
-      </div>
+            
+            <textarea 
+              rows="3" 
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Düşüncelerinizi buraya yazın..."
+              className="w-full px-4 py-3 border border-border rounded-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none bg-background text-sm"
+              required
+            ></textarea>
+            
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
+                {submitStatus === 'success' && <span className="text-success">Yorumunuz başarıyla eklendi!</span>}
+                {submitStatus === 'error' && <span className="text-error">Bir hata oluştu veya giriş yapmadınız.</span>}
+              </div>
+              <button 
+                type="submit" 
+                disabled={submitStatus === 'loading'}
+                className="px-6 py-2 bg-primary text-white rounded-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-70 text-sm"
+              >
+                {submitStatus === 'loading' ? 'Gönderiliyor...' : 'Yorumu Gönder'}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div className="mb-8 p-4 bg-primary/5 border border-primary/20 rounded-xl text-center">
+          <p className="text-foreground/80">Yorum yapabilmek için <a href="/login" className="text-primary hover:underline font-medium">giriş yapmalısınız</a>.</p>
+        </div>
+      )}
 
       {/* Filtreleme ve Yorum Listesi */}
       <div className="space-y-6">
@@ -186,7 +228,7 @@ const CommentsSection = ({ targetType, targetId }) => {
                     <User size={20} />
                   </div>
                   <div>
-                    <h5 className="font-bold text-sm text-foreground">Kullanıcı #{comment.user_id}</h5>
+                    <h5 className="font-bold text-sm text-foreground">{comment.user?.name || `Kullanıcı #${comment.user_id}`}</h5>
                     <div className="flex items-center gap-2 mt-0.5">
                       <div className="flex">{renderStars(comment.rating)}</div>
                       <span className="text-xs text-muted">• {new Date(comment.created_at).toLocaleDateString('tr-TR')}</span>
@@ -213,9 +255,11 @@ const CommentsSection = ({ targetType, targetId }) => {
               <div className="pt-3 flex items-center gap-4">
                 <button 
                   onClick={() => handleHelpful(comment.id)}
-                  className="flex items-center gap-1.5 text-xs font-medium text-muted hover:text-primary transition-colors"
+                  className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+                    votedComments.includes(comment.id) ? 'text-primary' : 'text-muted hover:text-primary'
+                  }`}
                 >
-                  <ThumbsUp size={14} /> Faydalı ({comment.helpful_count})
+                  <ThumbsUp size={14} fill={votedComments.includes(comment.id) ? "currentColor" : "none"} /> Faydalı ({comment.helpful_count})
                 </button>
               </div>
             </div>

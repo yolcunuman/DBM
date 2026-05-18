@@ -15,6 +15,10 @@ const ArtworksPage = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [selectedArtwork, setSelectedArtwork] = useState(null);
   const [orderStatus, setOrderStatus] = useState('');
+  
+  const userStr = localStorage.getItem('user');
+  const user = userStr ? JSON.parse(userStr) : null;
+  const currentUserId = user ? user.id : 1;
 
   // Eserleri çek
   const fetchArtworks = () => {
@@ -42,7 +46,7 @@ const ArtworksPage = () => {
 
   // Favorileri çek
   useEffect(() => {
-    fetch(`${API_URL}/favorites?user_id=1`)
+    fetch(`${API_URL}/favorites?user_id=${currentUserId}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -66,7 +70,7 @@ const ArtworksPage = () => {
     fetch(`${API_URL}/favorites/toggle`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: 1, artwork_id: artworkId })
+      body: JSON.stringify({ user_id: currentUserId, artwork_id: artworkId })
     })
       .then(res => res.json())
       .then(data => {
@@ -86,7 +90,7 @@ const ArtworksPage = () => {
     fetch(`${API_URL}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: 1, artwork_id: artwork.id, quantity: 1 })
+      body: JSON.stringify({ user_id: currentUserId, artwork_id: artwork.id, quantity: 1 })
     })
       .then(res => res.json())
       .then(data => {
@@ -225,8 +229,16 @@ const ArtworksPage = () => {
 
       {/* Detay & Satın Alma Modalı */}
       {selectedArtwork && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-surface rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 md:pt-24 bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface rounded-lg shadow-xl max-w-4xl w-full max-h-[85vh] overflow-y-auto animate-scale-in relative">
+            {/* Modal Kapatma Butonu - Artık sağ üst köşede tüm modala ait */}
+            <button 
+              onClick={() => { setSelectedArtwork(null); setOrderStatus(''); }}
+              className="absolute top-4 right-4 w-10 h-10 bg-surface/80 backdrop-blur border border-border shadow-md rounded-full flex items-center justify-center hover:bg-surface hover:scale-105 transition-all z-10 text-foreground"
+            >
+              <X size={20} />
+            </button>
+
             {/* Modal İçerik */}
             <div className="grid grid-cols-1 md:grid-cols-2">
               {/* Sol: Görsel */}
@@ -236,12 +248,6 @@ const ArtworksPage = () => {
                 ) : (
                   <div className="w-full h-full flex items-center justify-center"><Palette size={64} className="text-primary-light opacity-30" /></div>
                 )}
-                <button 
-                  onClick={() => { setSelectedArtwork(null); setOrderStatus(''); }}
-                  className="absolute top-3 right-3 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors"
-                >
-                  <X size={18} />
-                </button>
               </div>
 
               {/* Sağ: Bilgiler */}
