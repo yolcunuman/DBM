@@ -11,6 +11,7 @@ const CommentsSection = ({ targetType, targetId }) => {
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [submitStatus, setSubmitStatus] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [votedComments, setVotedComments] = useState([]);
   
@@ -52,6 +53,7 @@ const CommentsSection = ({ targetType, targetId }) => {
     }
     
     setSubmitStatus('loading');
+    setSubmitError('');
     
     const commentData = {
       target_type: targetType,
@@ -78,9 +80,13 @@ const CommentsSection = ({ targetType, targetId }) => {
           setTimeout(() => setSubmitStatus(''), 3000);
         } else {
           setSubmitStatus('error');
+          setSubmitError(data.message || 'Bir hata oluştu.');
         }
       })
-      .catch(() => setSubmitStatus('error'));
+      .catch(() => {
+        setSubmitStatus('error');
+        setSubmitError('Sunucuya bağlanılamadı.');
+      });
   };
 
   const handleHelpful = (commentId) => {
@@ -179,8 +185,10 @@ const CommentsSection = ({ targetType, targetId }) => {
             
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                {submitStatus === 'success' && <span className="text-success">Yorumunuz başarıyla eklendi!</span>}
-                {submitStatus === 'error' && <span className="text-error">Bir hata oluştu veya giriş yapmadınız.</span>}
+                {submitStatus === 'success' && <span className="text-success">Değlendirmeniz başarıyla eklendi!</span>}
+                {submitStatus === 'error' && (
+                  <span className="text-error">{submitError || 'Bir hata oluştu veya giriş yapmadınız.'}</span>
+                )}
               </div>
               <button 
                 type="submit" 
@@ -231,7 +239,7 @@ const CommentsSection = ({ targetType, targetId }) => {
                     <h5 className="font-bold text-sm text-foreground">{comment.user?.name || `Kullanıcı #${comment.user_id}`}</h5>
                     <div className="flex items-center gap-2 mt-0.5">
                       <div className="flex">{renderStars(comment.rating)}</div>
-                      <span className="text-xs text-muted">• {new Date(comment.created_at).toLocaleDateString('tr-TR')}</span>
+                    <span className="text-xs text-muted">• {new Date(comment.createdAt || comment.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </div>
                 </div>

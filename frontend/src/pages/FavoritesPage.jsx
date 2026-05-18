@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Trash2, ShoppingCart, Eye, Palette } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Heart, Trash2, ShoppingCart, Eye, Palette, CheckCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const API_URL = 'http://localhost:5000/api';
+const getCart = () => { try { return JSON.parse(localStorage.getItem('artisana_cart') || '[]'); } catch { return []; } };
+const saveCart = (c) => { localStorage.setItem('artisana_cart', JSON.stringify(c)); window.dispatchEvent(new Event('artisana_cart_updated')); };
 
 const FavoritesPage = () => {
+  const navigate = useNavigate();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [orderStatuses, setOrderStatuses] = useState({});
+  const [cartItems, setCartItems] = useState(new Set());
+  
+  const syncCartItems = () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('artisana_cart') || '[]');
+      setCartItems(new Set(cart.map(i => i.id)));
+    } catch { setCartItems(new Set()); }
+  };
   
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
@@ -26,6 +36,9 @@ const FavoritesPage = () => {
 
   useEffect(() => {
     fetchFavorites();
+    syncCartItems();
+    window.addEventListener('artisana_cart_updated', syncCartItems);
+    return () => window.removeEventListener('artisana_cart_updated', syncCartItems);
   }, []);
 
   const removeFavorite = (id) => {
@@ -38,23 +51,15 @@ const FavoritesPage = () => {
       });
   };
 
-  const handleBuy = (artworkId) => {
-    setOrderStatuses(prev => ({ ...prev, [artworkId]: 'loading' }));
-    fetch(`${API_URL}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: currentUserId, artwork_id: artworkId, quantity: 1 })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setOrderStatuses(prev => ({ ...prev, [artworkId]: 'success' }));
-          setTimeout(() => setOrderStatuses(prev => ({ ...prev, [artworkId]: '' })), 3000);
-        } else {
-          setOrderStatuses(prev => ({ ...prev, [artworkId]: 'error' }));
-        }
-      })
-      .catch(() => setOrderStatuses(prev => ({ ...prev, [artworkId]: 'error' })));
+  const handleAddToCart = (artwork) => {
+    const cart = getCart();
+    const existing = cart.find(i => i.id === artwork.id);
+    if (existing) {
+      existing.quantity = Math.min(existing.quantity + 1, artwork.stock || 1);
+    } else {
+      cart.push({ ...artwork, quantity: 1 });
+    }
+    saveCart(cart);
   };
 
   if (loading) return <div className="text-center py-20 text-muted">Favoriler yükleniyor...</div>;
@@ -81,7 +86,7 @@ const FavoritesPage = () => {
           {favorites.map(fav => {
             const artwork = fav.artwork;
             if (!artwork) return null;
-            const status = orderStatuses[artwork.id] || '';
+
 
             return (
               <div key={fav.id} className="bg-surface border border-border rounded-lg overflow-hidden hover:shadow-sm transition-shadow">
@@ -115,25 +120,26 @@ const FavoritesPage = () => {
                     </div>
 
                     <div className="flex items-center gap-3 mt-4 pt-3 border-t border-border">
-                      {status === 'success' ? (
-                        <span className="text-success text-sm font-medium">✅ Sipariş oluşturuldu!</span>
-                      ) : (
-                        <>
-                          <button 
-                            onClick={() => handleBuy(artwork.id)}
-                            disabled={!artwork.is_available || status === 'loading'}
-                            className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-sm text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50"
-                          >
-                            <ShoppingCart size={16} /> {status === 'loading' ? 'İşleniyor...' : 'Satın Al'}
-                          </button>
-                          <button 
-                            onClick={() => removeFavorite(fav.id)}
-                            className="flex items-center gap-2 px-4 py-2 border border-error/30 text-error rounded-sm text-sm font-medium hover:bg-error/5 transition-colors"
-                          >
-                            <Trash2 size={16} /> Kaldır
-                          </button>
-                        </>
-                      )}
+                      <button
+                        onClick={() => handleAddToCart(artwork)}
+                        disabled={!artwork.is_available}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
+                          cartItems.has(artwork.id)
+                            ? 'bg-success text-white cursor-default'
+                            : artwork.is_available
+                            ? 'bg-primary text-white hover:bg-primary-dark'
+                            : 'bg-muted-bg text-muted cursor-not-allowed'
+                        }`}
+                      >
+                        <ShoppingCart size={16} />
+                        {cartItems.has(artwork.id) ? 'Eklendi ✓' : artwork.is_available ? 'Sepete Ekle' : 'Tükendi'}
+                      </button>
+                      <button
+                        onClick={() => removeFavorite(fav.id)}
+                        className="flex items-center gap-2 px-4 py-2 border border-error/30 text-error rounded-sm text-sm font-medium hover:bg-error/5 transition-colors"
+                      >
+                        <Trash2 size={16} /> Kaldır
+                      </button>
                     </div>
                   </div>
                 </div>

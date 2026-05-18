@@ -87,9 +87,12 @@ const ArtworkDetailPage = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <button className="flex-1 bg-primary text-primary-foreground py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1">
+            <button 
+              onClick={() => navigate(`/checkout/${id}`)}
+              className="flex-1 bg-primary text-primary-foreground py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-primary/90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-1"
+            >
               <ShoppingBag size={20} />
-              <span className="font-medium text-lg">Sepete Ekle</span>
+              <span className="font-medium text-lg">Hemen Satın Al</span>
             </button>
             <button className="p-4 bg-secondary text-secondary-foreground rounded-xl flex items-center justify-center hover:bg-secondary/80 transition-all shadow-md hover:-translate-y-1">
               <Heart size={24} />

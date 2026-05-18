@@ -2,12 +2,24 @@
 //  Order Controller — Sipariş İş Mantığı
 // ═══════════════════════════════════════════════
 
-const { Order, Artwork } = require('../models');
+const { Order, Artwork, User } = require('../models');
 
 // ─── Sipariş oluştur ───────────────────────────
 const createOrder = async (req, res) => {
   try {
     const { user_id, artwork_id, quantity = 1, payment_method, shipping_address, notes } = req.body;
+
+    // Kullanıcıyı kontrol et
+    if (!user_id) {
+      return res.status(400).json({ success: false, message: 'Sipariş oluşturmak için giriş yapmalısınız.' });
+    }
+    const user = await User.findByPk(user_id);
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Oturumunuz geçerli değil veya kullanıcı silinmiş. Lütfen çıkış yapıp tekrar giriş yapın.' 
+      });
+    }
 
     // Eseri kontrol et
     const artwork = await Artwork.findByPk(artwork_id);
@@ -24,13 +36,16 @@ const createOrder = async (req, res) => {
       total_price,
       payment_method: payment_method || 'credit_card',
       shipping_address,
-      notes
+      notes,
+      status: 'pending'
     });
 
-    // Stoku güncelle
-    artwork.stock -= quantity;
-    if (artwork.stock <= 0) artwork.is_available = false;
-    await artwork.save();
+    // Stok kilidi: sipariş oluşturulunca eser artık alınamaz (stok=1 için)
+    if (artwork.stock <= quantity) {
+      artwork.is_available = false;
+      artwork.stock = Math.max(0, artwork.stock - quantity);
+      await artwork.save();
+    }
 
     res.status(201).json({ success: true, message: 'Sipariş başarıyla oluşturuldu.', data: order });
   } catch (error) {
@@ -80,13 +95,35 @@ const updateOrderStatus = async (req, res) => {
     const order = await Order.findByPk(id);
     if (!order) return res.status(404).json({ success: false, message: 'Sipariş bulunamadı.' });
 
-    // İptal durumunda stoku geri ekle
-    if (status === 'cancelled' && order.status !== 'cancelled') {
+    const oldStatus = order.status;
+    const newStatus = status;
+
+    const isApprovedState = (s) => ['confirmed', 'shipped', 'delivered'].includes(s);
+    const wasApproved = isApprovedState(oldStatus);
+    const isNowApproved = isApprovedState(newStatus);
+
+    if (wasApproved !== isNowApproved) {
       const artwork = await Artwork.findByPk(order.artwork_id);
       if (artwork) {
-        artwork.stock += order.quantity;
-        artwork.is_available = true;
-        await artwork.save();
+        if (!wasApproved && isNowApproved) {
+          // Sipariş onaylandığında stoku düşürüyoruz ve tükenirse satışa kapatıyoruz.
+          if (!artwork.is_available || artwork.stock < order.quantity) {
+            return res.status(400).json({ 
+              success: false, 
+              message: 'Bu eser tükenmiş veya başka bir sipariş için onaylanmış.' 
+            });
+          }
+          artwork.stock -= order.quantity;
+          if (artwork.stock <= 0) {
+            artwork.is_available = false;
+          }
+          await artwork.save();
+        } else if (wasApproved && !isNowApproved) {
+          // Daha önce onaylanmış sipariş iptal edildiğinde veya beklemeye alındığında stoku geri yüklüyoruz.
+          artwork.stock += order.quantity;
+          artwork.is_available = true;
+          await artwork.save();
+        }
       }
     }
 
@@ -99,9 +136,63 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+// ─── Kullanıcı iptal talebi ────────────────
+const requestCancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cancel_reason } = req.body;
+    if (!cancel_reason || cancel_reason.trim().length < 5) {
+      return res.status(400).json({ success: false, message: 'Lütfen en az 5 karakterlik bir iptal sebebi girin.' });
+    }
+    const order = await Order.findByPk(id);
+    if (!order) return res.status(404).json({ success: false, message: 'Sipariş bulunamadı.' });
+    if (['delivered', 'cancelled'].includes(order.status)) {
+      return res.status(400).json({ success: false, message: 'Bu sipariş iptal edilemez.' });
+    }
+    order.cancel_requested = true;
+    order.cancel_reason = cancel_reason.trim();
+    await order.save();
+    res.json({ success: true, message: 'İptal talebiniz alındı. Yönetici onayı bekleniyor.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─── Admin: iptal talebini onayla/reddet ───────────
+const approveCancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { approve } = req.body; // true = onayla, false = reddet
+    const order = await Order.findByPk(id, {
+      include: [{ model: Artwork, as: 'artwork' }]
+    });
+    if (!order) return res.status(404).json({ success: false, message: 'Sipariş bulunamadı.' });
+    if (!order.cancel_requested) return res.status(400).json({ success: false, message: 'İptal talebi bulunamadı.' });
+
+    if (approve) {
+      // İptal onaylandı: stok geri yükleniyor
+      if (order.artwork) {
+        order.artwork.stock = (order.artwork.stock || 0) + order.quantity;
+        order.artwork.is_available = true;
+        await order.artwork.save();
+      }
+      order.status = 'cancelled';
+    }
+    order.cancel_requested = false;
+    await order.save();
+
+    const msg = approve ? 'Sipariş iptal edildi, stok geri yüklendi.' : 'İptal talebi reddedildi.';
+    res.json({ success: true, message: msg, data: order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createOrder,
   getAllOrders,
   getUserOrders,
-  updateOrderStatus
+  updateOrderStatus,
+  requestCancelOrder,
+  approveCancelOrder,
 };

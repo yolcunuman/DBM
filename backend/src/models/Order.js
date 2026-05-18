@@ -46,7 +46,17 @@ const Order = sequelize.define('orders', {
   notes: {
     type: DataTypes.TEXT,
     allowNull: true,
+  },
+  cancel_requested: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  cancel_reason: {
+    type: DataTypes.TEXT,
+    allowNull: true,
   }
+}, {
+  // Yeni alanları mevcut tabloya eklemek için alter kullan
 });
 
 module.exports = Order;

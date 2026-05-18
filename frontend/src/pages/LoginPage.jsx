@@ -6,6 +6,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -26,22 +27,28 @@ const LoginPage = () => {
         throw new Error(data.error || 'Giriş başarısız oldu.');
       }
 
-      // Store token and user data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      // Redirect based on role
-      if (data.user.role === 'ADMIN') {
-        navigate('/admin');
-      } else {
-        navigate('/');
-      }
+      setSuccess(true);
       
-      // Refresh page to update navbar state (simple approach without context)
-      window.dispatchEvent(new Event("storage"));
+      // Wait 3 seconds before redirecting
+      setTimeout(() => {
+        // Store token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+
+        // Redirect based on role
+        if (data.user.role === 'ADMIN') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
+        
+        // Refresh page to update navbar state
+        window.dispatchEvent(new Event("storage"));
+        setLoading(false);
+      }, 3000);
+      
     } catch (err) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
@@ -85,9 +92,11 @@ const LoginPage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className={`w-full py-2 px-4 font-semibold rounded-lg transition-colors disabled:opacity-50 text-white ${
+              success ? 'bg-success hover:bg-success/90' : 'bg-primary hover:bg-primary/90'
+            }`}
           >
-            {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
+            {success ? 'Giriş başarılı, yönlendiriliyor...' : loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
           </button>
         </form>
         

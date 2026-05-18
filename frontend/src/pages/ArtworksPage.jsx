@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Heart, Search, Filter, Eye, ShoppingCart, Palette, X } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, Search, Eye, ShoppingCart, Palette, X, CheckCircle } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
 
 const API_URL = 'http://localhost:5000/api';
 
+const getCart = () => { try { return JSON.parse(localStorage.getItem('artisana_cart') || '[]'); } catch { return []; } };
+const saveCart = (c) => { localStorage.setItem('artisana_cart', JSON.stringify(c)); window.dispatchEvent(new Event('artisana_cart_updated')); };
+
 const ArtworksPage = () => {
+  const navigate = useNavigate();
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState(new Set());
@@ -14,8 +18,15 @@ const ArtworksPage = () => {
   const [categories, setCategories] = useState([]);
   const [sortBy, setSortBy] = useState('newest');
   const [selectedArtwork, setSelectedArtwork] = useState(null);
-  const [orderStatus, setOrderStatus] = useState('');
-  
+  const [cartItems, setCartItems] = useState(new Set());
+
+  const syncCartItems = () => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('artisana_cart') || '[]');
+      setCartItems(new Set(cart.map(i => i.id)));
+    } catch { setCartItems(new Set()); }
+  };
+
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const currentUserId = user ? user.id : 1;
@@ -37,11 +48,14 @@ const ArtworksPage = () => {
       .catch(() => setLoading(false));
   };
 
-  // Kategorileri çek
+  // Kategorileri çek + sepet senkronizasyonu
   useEffect(() => {
     fetch(`${API_URL}/artworks/categories`)
       .then(res => res.json())
       .then(data => { if (data.success) setCategories(data.data); });
+    syncCartItems();
+    window.addEventListener('artisana_cart_updated', syncCartItems);
+    return () => window.removeEventListener('artisana_cart_updated', syncCartItems);
   }, []);
 
   // Favorileri çek
@@ -85,24 +99,15 @@ const ArtworksPage = () => {
       });
   };
 
-  const handleBuy = (artwork) => {
-    setOrderStatus('loading');
-    fetch(`${API_URL}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: currentUserId, artwork_id: artwork.id, quantity: 1 })
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          setOrderStatus('success');
-          fetchArtworks();
-          setTimeout(() => { setOrderStatus(''); setSelectedArtwork(null); }, 2500);
-        } else {
-          setOrderStatus('error: ' + data.message);
-        }
-      })
-      .catch(() => setOrderStatus('error: Sunucu hatası'));
+  const handleAddToCart = (artwork) => {
+    const cart = getCart();
+    const existing = cart.find(i => i.id === artwork.id);
+    if (existing) {
+      existing.quantity = Math.min(existing.quantity + 1, artwork.stock);
+    } else {
+      cart.push({ ...artwork, quantity: 1 });
+    }
+    saveCart(cart);
   };
 
   if (loading && artworks.length === 0) {
@@ -124,8 +129,8 @@ const ArtworksPage = () => {
           <form onSubmit={handleSearch} className="flex-1 flex gap-2">
             <div className="relative flex-1">
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Eser adı, sanatçı veya açıklama ara..."
@@ -139,8 +144,8 @@ const ArtworksPage = () => {
 
           {/* Kategori Filtresi */}
           <div className="flex gap-2">
-            <select 
-              value={selectedCategory} 
+            <select
+              value={selectedCategory}
               onChange={e => setSelectedCategory(e.target.value)}
               className="px-4 py-2.5 border border-border rounded-sm bg-background text-sm focus:outline-none focus:border-primary"
             >
@@ -149,8 +154,8 @@ const ArtworksPage = () => {
             </select>
 
             {/* Sıralama */}
-            <select 
-              value={sortBy} 
+            <select
+              value={sortBy}
               onChange={e => setSortBy(e.target.value)}
               className="px-4 py-2.5 border border-border rounded-sm bg-background text-sm focus:outline-none focus:border-primary"
             >
@@ -174,10 +179,10 @@ const ArtworksPage = () => {
                 {artwork.image_url ? (
                   <img src={artwork.image_url} alt={artwork.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-primary-light font-serif text-2xl opacity-40"><Palette size={48}/></div>
+                  <div className="w-full h-full flex items-center justify-center text-primary-light font-serif text-2xl opacity-40"><Palette size={48} /></div>
                 )}
                 {/* Favori Butonu */}
-                <button 
+                <button
                   onClick={(e) => toggleFavorite(artwork.id, e)}
                   className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-md ${isFav ? 'bg-error text-white' : 'bg-white/90 text-foreground/60 hover:text-error'}`}
                 >
@@ -207,14 +212,33 @@ const ArtworksPage = () => {
                   {artwork.year && <span>{artwork.year}</span>}
                 </div>
 
-                <div className="pt-3 border-t border-border flex items-center justify-between">
-                  <div className="text-xl font-bold text-secondary">{Number(artwork.price).toLocaleString('tr-TR')} ₺</div>
-                  <button 
-                    onClick={() => setSelectedArtwork(artwork)}
-                    className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 text-primary rounded-sm hover:bg-primary hover:text-white transition-all text-sm font-medium"
-                  >
-                    <Eye size={16} /> Detay
-                  </button>
+                <div className="pt-3 border-t border-border flex items-center justify-between gap-2">
+                  <div className="text-lg font-bold text-secondary">{Number(artwork.price).toLocaleString('tr-TR')} ₺</div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => setSelectedArtwork(artwork)}
+                      className="p-2 bg-muted-bg text-muted rounded-sm hover:bg-border transition-all"
+                      title="Detay"
+                    >
+                      <Eye size={15} />
+                    </button>
+                    <button
+                      onClick={() => artwork.is_available && handleAddToCart(artwork)}
+                      disabled={!artwork.is_available}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-sm transition-all text-sm font-medium ${
+                        cartItems.has(artwork.id)
+                          ? 'bg-success text-white cursor-default'
+                          : artwork.is_available
+                          ? 'bg-primary text-white hover:bg-primary-dark'
+                          : 'bg-muted-bg text-muted cursor-not-allowed'
+                      }`}
+                    >
+                      {cartItems.has(artwork.id)
+                        ? <><CheckCircle size={14}/> Eklendi</>
+                        : <><ShoppingCart size={14}/> Sepete Ekle</>
+                      }
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -232,8 +256,8 @@ const ArtworksPage = () => {
         <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20 md:pt-24 bg-black/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-surface rounded-lg shadow-xl max-w-4xl w-full max-h-[85vh] overflow-y-auto animate-scale-in relative">
             {/* Modal Kapatma Butonu - Artık sağ üst köşede tüm modala ait */}
-            <button 
-              onClick={() => { setSelectedArtwork(null); setOrderStatus(''); }}
+            <button
+              onClick={() => { setSelectedArtwork(null); setCartNotify(''); }}
               className="absolute top-4 right-4 w-10 h-10 bg-surface/80 backdrop-blur border border-border shadow-md rounded-full flex items-center justify-center hover:bg-surface hover:scale-105 transition-all z-10 text-foreground"
             >
               <X size={20} />
@@ -289,30 +313,35 @@ const ArtworksPage = () => {
                     </span>
                   </div>
 
-                  {orderStatus === 'success' && (
-                    <div className="text-success text-sm bg-success/10 p-3 rounded-sm border border-success/20">
-                      ✅ Siparişiniz başarıyla oluşturuldu!
+                  {cartItems.has(selectedArtwork.id) && (
+                    <div className="text-success text-sm bg-success/10 p-3 rounded-sm border border-success/20 flex items-center gap-2">
+                      <CheckCircle size={16}/> Ürün sepetinizde bulunuyor!
                     </div>
-                  )}
-                  {orderStatus.startsWith('error') && (
-                    <div className="text-error text-sm bg-error/10 p-3 rounded-sm">{orderStatus}</div>
                   )}
 
                   <div className="flex gap-3">
-                    <button 
+                    <button
                       onClick={() => toggleFavorite(selectedArtwork.id, { stopPropagation: () => {} })}
                       className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-sm font-medium transition-colors border ${favorites.has(selectedArtwork.id) ? 'border-error text-error bg-error/5' : 'border-border text-foreground/70 hover:border-primary hover:text-primary'}`}
                     >
                       <Heart size={18} fill={favorites.has(selectedArtwork.id) ? 'currentColor' : 'none'} />
                       {favorites.has(selectedArtwork.id) ? 'Favoride' : 'Favoriye Ekle'}
                     </button>
-                    <button 
-                      onClick={() => handleBuy(selectedArtwork)}
-                      disabled={!selectedArtwork.is_available || orderStatus === 'loading' || orderStatus === 'success'}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-white rounded-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    <button
+                      onClick={() => selectedArtwork.is_available && handleAddToCart(selectedArtwork)}
+                      disabled={!selectedArtwork.is_available}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-sm font-medium transition-colors ${
+                        cartItems.has(selectedArtwork.id)
+                          ? 'bg-success text-white cursor-default'
+                          : selectedArtwork.is_available
+                          ? 'bg-primary text-white hover:bg-primary-dark'
+                          : 'bg-muted-bg text-muted cursor-not-allowed'
+                      }`}
                     >
-                      <ShoppingCart size={18} />
-                      {orderStatus === 'loading' ? 'İşleniyor...' : 'Satın Al'}
+                      {cartItems.has(selectedArtwork.id)
+                        ? <><CheckCircle size={18}/> Sepete Eklendi</>
+                        : <><ShoppingCart size={18}/> Sepete Ekle</>
+                      }
                     </button>
                   </div>
                 </div>
