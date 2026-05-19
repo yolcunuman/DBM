@@ -126,18 +126,7 @@ const RegisterPage = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Hesap Türü</label>
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full px-4 py-2 bg-background border border-white/20 rounded-lg focus:outline-none focus:border-primary transition-colors"
-            >
-              <option value="USER">Müşteri (Sanatsever)</option>
-              <option value="ARTIST">Sanatçı (Eser Yükleyici)</option>
-            </select>
-          </div>
+
 
           <button
             type="submit"
