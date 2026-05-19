@@ -3,7 +3,7 @@ require('dotenv').config();
 
 let sequelize;
 
-if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres')) {
+if (process.env.USE_LOCAL_SQLITE !== 'true' && process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('postgres')) {
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     logging: false,

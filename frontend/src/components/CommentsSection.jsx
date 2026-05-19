@@ -26,7 +26,7 @@ const CommentsSection = ({ targetType, targetId }) => {
 
   const fetchComments = () => {
     setLoading(true);
-    fetch(`http://localhost:5000/api/comments?target_type=${targetType}&target_id=${targetId}&sort=${sortBy}`)
+    fetch(`http://localhost:5001/api/comments?target_type=${targetType}&target_id=${targetId}&sort=${sortBy}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -62,7 +62,7 @@ const CommentsSection = ({ targetType, targetId }) => {
       rating: rating
     };
 
-    fetch('http://localhost:5000/api/comments', {
+    fetch('http://localhost:5001/api/comments', {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ const CommentsSection = ({ targetType, targetId }) => {
     const hasVoted = votedComments.includes(commentId);
     const action = hasVoted ? 'decrement' : 'increment';
 
-    fetch(`http://localhost:5000/api/comments/${commentId}/helpful`, { 
+    fetch(`http://localhost:5001/api/comments/${commentId}/helpful`, { 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -246,7 +246,7 @@ const CommentsSection = ({ targetType, targetId }) => {
                 
                 {comment.is_verified_purchase && (
                   <div className="flex items-center gap-1 text-xs text-success font-medium bg-success/10 px-2 py-1 rounded-sm">
-                    <ShieldCheck size={14} /> Doğrulanmış Katılımcı
+                    <ShieldCheck size={14} /> {targetType === 'artwork' ? 'Doğrulanmış Alıcı' : 'Doğrulanmış Katılımcı'}
                   </div>
                 )}
               </div>

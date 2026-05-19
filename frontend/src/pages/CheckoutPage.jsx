@@ -2,7 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, CreditCard, Truck, CheckCircle2, Package, Tag, ArrowLeft, Lock, ShieldCheck } from 'lucide-react';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5001/api';
+
+const VALID_COUPONS = {
+  'SANAT10': { discount: 10, label: '%10 İndirim' },
+  'YAZ10': { discount: 10, label: '%10 Yaz Fırsatı İndirimi' },
+  'ARTISANA20': { discount: 20, label: '%20 İndirim' },
+  'HOSGELDIN': { discount: 15, label: '%15 Hoş Geldin İndirimi' },
+};
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -11,6 +18,32 @@ const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponError, setCouponError] = useState('');
+
+  const handleApplyCoupon = (e) => {
+    e.preventDefault();
+    setCouponError('');
+    const code = couponCode.trim().toUpperCase();
+    if (!code) {
+      setCouponError('Lütfen bir kupon kodu girin.');
+      return;
+    }
+    const found = VALID_COUPONS[code];
+    if (found) {
+      setAppliedCoupon({ code, ...found });
+      localStorage.setItem('artisana_coupon', JSON.stringify({ code, ...found }));
+      setCouponCode('');
+    } else {
+      setCouponError('Geçersiz kupon kodu.');
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    localStorage.removeItem('artisana_coupon');
+    setCouponCode('');
+  };
 
   const [form, setForm] = useState({
     fullName: '', phone: '', city: '', district: '', address: '', addressTitle: 'Ev',
@@ -113,7 +146,8 @@ const CheckoutPage = () => {
             quantity: item.quantity,
             payment_method: form.paymentMethod,
             shipping_address: `${form.fullName} - ${form.phone} | ${form.address}, ${form.district}/${form.city}`,
-            notes: `Kargo: ${form.shippingMethod === 'hizli' ? 'Hızlı' : 'Standart'}`
+            notes: `Kargo: ${form.shippingMethod === 'hizli' ? 'Hızlı' : 'Standart'}`,
+            coupon_code: appliedCoupon ? appliedCoupon.code : null
           })
         });
         const data = await response.json();
@@ -413,6 +447,48 @@ const CheckoutPage = () => {
                   </span>
                 </div>
               ))}
+            </div>
+
+            {/* Kupon Kodu Girişi */}
+            <div className="border-t border-border pt-4">
+              <form onSubmit={handleApplyCoupon} className="space-y-2">
+                <label className="block text-xs font-medium text-muted">İndirim Kuponu</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={e => {
+                      setCouponCode(e.target.value);
+                      setCouponError('');
+                    }}
+                    placeholder="Örn: YAZ10"
+                    disabled={!!appliedCoupon}
+                    className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary disabled:opacity-50"
+                  />
+                  {appliedCoupon ? (
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="px-3 py-2 border border-red-500/20 text-red-500 rounded-lg text-xs font-medium hover:bg-red-500/10 transition-colors"
+                    >
+                      Kaldır
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary-dark transition-all duration-300 shadow-sm"
+                    >
+                      Uygula
+                    </button>
+                  )}
+                </div>
+                {couponError && <p className="text-xs text-red-500">{couponError}</p>}
+                {appliedCoupon && (
+                  <p className="text-xs text-success flex items-center gap-1">
+                    🎉 <strong>{appliedCoupon.code}</strong> uygulandı: {appliedCoupon.label}
+                  </p>
+                )}
+              </form>
             </div>
 
             <div className="border-t border-border pt-3 space-y-2 text-sm">

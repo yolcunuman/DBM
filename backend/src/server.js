@@ -56,17 +56,19 @@ const startServer = async () => {
   try {
     // Veritabanı bağlantısı
     await sequelize.authenticate();
-    console.log('✅ PostgreSQL bağlantısı başarılı!');
-
-    // Tabloları oluştur
-    await sequelize.sync();
-    try {
-      await sequelize.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password VARCHAR(255);`);
-      await sequelize.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'USER';`);
-    } catch (e) {
-      console.log('Alter table warning:', e.message);
+    
+    if (process.env.USE_LOCAL_SQLITE === 'true') {
+      console.log('✅ SQLite bağlantısı başarılı (Supabase REST API Köprü Modu)!');
+      // Tabloları güncel şemayla senkronize et (veri silinmesini engeller)
+      await sequelize.sync();
+      console.log('✅ SQLite tabloları başarıyla senkronize edildi!');
+      const syncSupabaseToSQLite = require('./utils/supabaseSync');
+      await syncSupabaseToSQLite();
+    } else {
+      console.log('✅ PostgreSQL doğrudan bağlantısı başarılı!');
+      await sequelize.sync({ alter: true });
+      console.log('✅ Veritabanı tabloları senkronize edildi!');
     }
-    console.log('✅ Veritabanı tabloları senkronize edildi!');
 
     // Eserler boşsa otomatik seed (arkadaşın projeyi çektiğinde de çalışsın)
     const { Artwork } = require('./models');
@@ -80,18 +82,47 @@ const startServer = async () => {
       );
     }
 
+    // Atölyeler eksikse veya boşsa otomatik seed
+    const { Workshop } = require('./models');
+    const workshopCount = await Workshop.count();
+    if (workshopCount < 13) {
+      const { seedWorkshops } = require('./controllers/workshopController');
+      await seedWorkshops(
+        {},
+        { status: () => ({ json: (d) => console.log(`🎭 ${d.message}`) }), json: (d) => console.log(`🎭 ${d.message}`) }
+      );
+    }
+
+    // Rezervasyon sayılarını ve kapasiteleri eşitle
+    const syncEnrolled = require('./utils/syncEnrolled');
+    await syncEnrolled();
+
     // Sunucuyu başlat
     app.listen(PORT, () => {
       console.log(`
   ═══════════════════════════════════════════════
    🎨 Artisana API — Geliştirici 2
    📡 http://localhost:${PORT}
-   🗃️  Veritabanı: ${process.env.DB_NAME}
+   🗃️  Veritabanı: ${process.env.USE_LOCAL_SQLITE === 'true' ? 'SQLite (Supabase REST API Köprü Modu)' : 'PostgreSQL (Canlı Supabase)'}
    🌐 CORS: ${process.env.CLIENT_URL}
   ═══════════════════════════════════════════════
       `);
     });
   } catch (error) {
+    if (process.env.USE_LOCAL_SQLITE !== 'true') {
+      console.log('⚠️ PostgreSQL doğrudan bağlantı kurulamadı (Connection Pooler kapalı veya IPv6 engeli).');
+      console.log('🔄 Supabase REST API köprüsü devreye alınıyor... SQLite yedek sunucusu başlatılıyor!');
+      
+      const { fork } = require('child_process');
+      const child = fork(__filename, process.argv.slice(2), {
+        env: { ...process.env, USE_LOCAL_SQLITE: 'true' }
+      });
+      
+      child.on('exit', (code) => {
+        process.exit(code || 0);
+      });
+      return;
+    }
     console.error('❌ Sunucu başlatılırken hata:', error.message);
     process.exit(1);
   }

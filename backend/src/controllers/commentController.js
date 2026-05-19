@@ -3,7 +3,7 @@
 //  Geliştirici 2 — Madde 12, 13, 14, 15
 // ═══════════════════════════════════════════════
 
-const { Comment, User, Artwork, Workshop, Order } = require('../models');
+const { Comment, User, Artwork, Workshop, Order, Reservation } = require('../models');
 const { Op } = require('sequelize');
 
 // GET /api/comments?target_type=workshop&target_id=1&sort=newest
@@ -99,11 +99,14 @@ const createComment = async (req, res) => {
 
     } else if (target_type === 'workshop') {
       // Atölye/etkinliğe kayıt var mı?
-      const workshop = await Workshop.findByPk(target_id, {
-        include: [{ association: 'registrations', where: { user_id }, required: false }]
+      const reservation = await Reservation.findOne({
+        where: {
+          user_id,
+          workshop_id: target_id,
+          status: { [Op.in]: ['pending', 'confirmed'] }
+        }
       });
-      const hasRegistration = workshop?.registrations?.length > 0;
-      if (!hasRegistration) {
+      if (!reservation) {
         return res.status(403).json({
           success: false,
           message: 'Bu atölyeye yorum yapabilmek için önce katılmış olmanız gerekiyor.'

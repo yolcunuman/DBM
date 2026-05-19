@@ -9,26 +9,49 @@ const getAdminDashboardStats = async (req, res) => {
   try {
     // 1. Atölye Doluluk Oranları ve Rezervasyon İstatistikleri
     const workshops = await Workshop.findAll({
-      attributes: ['id', 'title', 'capacity', 'enrolled', 'price']
+      attributes: ['id', 'title', 'capacity', 'enrolled', 'price', 'description', 'instructor', 'category', 'date', 'start_time', 'end_time', 'location', 'image_url', 'status']
     });
 
     let totalCapacity = 0;
     let totalEnrolled = 0;
     let totalRevenue = 0;
 
-    const workshopStats = workshops.map(w => {
+    const workshopStats = await Promise.all(workshops.map(async w => {
       totalCapacity += w.capacity;
       totalEnrolled += w.enrolled;
       totalRevenue += (w.enrolled * parseFloat(w.price));
-      
+
+      // Calculate average rating
+      const avgComment = await Comment.findOne({
+        where: { target_type: 'workshop', target_id: w.id },
+        attributes: [[fn('AVG', col('rating')), 'avg_rating']],
+        raw: true
+      });
+      const avgRating = avgComment?.avg_rating ? parseFloat(avgComment.avg_rating).toFixed(1) : '0.0';
+
+      // Count total reservations
+      const totalReservations = await Reservation.count({ where: { workshop_id: w.id } });
+
       return {
         id: w.id,
         title: w.title,
         capacity: w.capacity,
         enrolled: w.enrolled,
-        occupancy_rate: w.capacity > 0 ? Math.round((w.enrolled / w.capacity) * 100) : 0
+        price: w.price,
+        description: w.description,
+        instructor: w.instructor,
+        category: w.category,
+        date: w.date,
+        start_time: w.start_time,
+        end_time: w.end_time,
+        location: w.location,
+        image_url: w.image_url,
+        status: w.status,
+        occupancy_rate: w.capacity > 0 ? Math.round((w.enrolled / w.capacity) * 100) : 0,
+        average_rating: avgRating,
+        total_reservations: totalReservations
       };
-    });
+    }));
 
     const averageOccupancy = totalCapacity > 0 ? Math.round((totalEnrolled / totalCapacity) * 100) : 0;
 
@@ -43,6 +66,34 @@ const getAdminDashboardStats = async (req, res) => {
     // 4. Eser İstatistikleri
     const totalArtworks = await Artwork.count();
     const availableArtworks = await Artwork.count({ where: { is_available: true } });
+
+    const artworksList = await Artwork.findAll({
+      attributes: ['id', 'title', 'artist_name', 'price', 'is_available', 'views']
+    });
+
+    const artworkStats = await Promise.all(artworksList.map(async a => {
+      const totalLikes = await Favorite.count({ where: { artwork_id: a.id } });
+      const totalCommentsCount = await Comment.count({ where: { target_type: 'artwork', target_id: a.id } });
+      
+      const orders = await Order.findAll({
+        where: { artwork_id: a.id, status: ['confirmed', 'shipped', 'delivered'] }
+      });
+      const totalSold = orders.length;
+      const totalRev = orders.reduce((sum, o) => sum + parseFloat(o.total_price), 0);
+
+      return {
+        id: a.id,
+        title: a.title,
+        artist_name: a.artist_name,
+        price: a.price,
+        is_available: a.is_available,
+        views: a.views || 0,
+        total_likes: totalLikes,
+        total_comments: totalCommentsCount,
+        total_sold: totalSold,
+        total_revenue: totalRev
+      };
+    }));
 
     // 5. Sipariş İstatistikleri
     const totalOrders = await Order.count();
@@ -69,7 +120,6 @@ const getAdminDashboardStats = async (req, res) => {
           estimated_revenue: totalRevenue,
           open_tickets: openTicketsCount,
           total_comments: totalComments,
-          // Yeni eklenen eser istatistikleri
           total_artworks: totalArtworks,
           available_artworks: availableArtworks,
           total_orders: totalOrders,
@@ -81,7 +131,8 @@ const getAdminDashboardStats = async (req, res) => {
           total_sales_revenue: totalSalesRevenue,
           total_favorites: totalFavorites
         },
-        workshops: workshopStats
+        workshops: workshopStats,
+        artworks: artworkStats
       }
     });
 

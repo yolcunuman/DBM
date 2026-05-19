@@ -65,6 +65,11 @@ const Artwork = sequelize.define('artworks', {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 1,
+  },
+  views: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
   }
 });
 

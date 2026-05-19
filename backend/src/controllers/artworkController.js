@@ -161,15 +161,18 @@ const getAllArtworks = async (req, res) => {
     const { category, artist, min_price, max_price, search, sort } = req.query;
     const where = {};
 
+    const isSqlite = Artwork.sequelize.options.dialect === 'sqlite';
+    const likeOp = isSqlite ? Op.like : Op.iLike;
+
     if (category) where.category = category;
-    if (artist) where.artist_name = { [Op.iLike]: `%${artist}%` };
+    if (artist) where.artist_name = { [likeOp]: `%${artist}%` };
     if (min_price) where.price = { ...where.price, [Op.gte]: parseFloat(min_price) };
     if (max_price) where.price = { ...where.price, [Op.lte]: parseFloat(max_price) };
     if (search) {
       where[Op.or] = [
-        { title: { [Op.iLike]: `%${search}%` } },
-        { artist_name: { [Op.iLike]: `%${search}%` } },
-        { description: { [Op.iLike]: `%${search}%` } }
+        { title: { [likeOp]: `%${search}%` } },
+        { artist_name: { [likeOp]: `%${search}%` } },
+        { description: { [likeOp]: `%${search}%` } }
       ];
     }
 
@@ -192,6 +195,9 @@ const getArtworkById = async (req, res) => {
     const artwork = await Artwork.findByPk(req.params.id);
     if (!artwork) return res.status(404).json({ success: false, message: 'Eser bulunamadı.' });
 
+    await artwork.increment('views', { by: 1 });
+    await artwork.reload();
+
     res.json({ success: true, data: artwork });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -209,9 +215,67 @@ const getCategories = async (req, res) => {
   }
 };
 
+// ─── Eser Ekle (Sanatçı veya Admin) ──────────────
+const createArtwork = async (req, res) => {
+  try {
+    const { title, description, artist_name, artist_bio, category, technique, dimensions, year, price, image_url, stock } = req.body;
+    const { User: UserModel } = require('../models');
+    const user = await UserModel.findByPk(req.user.id);
+
+    const finalArtistName = artist_name || user?.name || 'Sanatçı';
+    const finalArtistBio = artist_bio || user?.bio || 'Bağımsız Sanatçı';
+
+    const artwork = await Artwork.create({
+      title,
+      description,
+      artist_name: finalArtistName,
+      artist_bio: finalArtistBio,
+      category: category || 'Diğer',
+      technique,
+      dimensions,
+      year: parseInt(year) || new Date().getFullYear(),
+      price: parseFloat(price) || 0,
+      image_url: image_url || 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=500',
+      is_available: true,
+      stock: parseInt(stock) || 1,
+      views: 0
+    });
+
+    res.status(201).json({ success: true, data: artwork, message: 'Eser başarıyla eklendi.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+const getUniqueArtists = async (req, res) => {
+  try {
+    const artworks = await Artwork.findAll({
+      attributes: ['artist_name', 'artist_bio', 'image_url']
+    });
+    
+    const uniqueMap = {};
+    artworks.forEach(art => {
+      if (art.artist_name && !uniqueMap[art.artist_name]) {
+        uniqueMap[art.artist_name] = {
+          artist_name: art.artist_name,
+          artist_bio: art.artist_bio || 'Bağımsız Sanatçı',
+          image_url: art.image_url
+        };
+      }
+    });
+    
+    res.json({ success: true, data: Object.values(uniqueMap) });
+  } catch (error) {
+    console.error('getUniqueArtists error:', error);
+    res.status(500).json({ success: false, message: 'Sanatçılar listelenirken hata oluştu.' });
+  }
+};
+
 module.exports = {
   seedArtworks,
   getAllArtworks,
   getArtworkById,
-  getCategories
+  getCategories,
+  createArtwork,
+  getUniqueArtists
 };

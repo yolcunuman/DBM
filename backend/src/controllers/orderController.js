@@ -5,9 +5,16 @@
 const { Order, Artwork, User } = require('../models');
 
 // ─── Sipariş oluştur ───────────────────────────
+const VALID_COUPONS = {
+  'SANAT10': { discount: 10, label: '%10 İndirim' },
+  'YAZ10': { discount: 10, label: '%10 Yaz Fırsatı İndirimi' },
+  'ARTISANA20': { discount: 20, label: '%20 İndirim' },
+  'HOSGELDIN': { discount: 15, label: '%15 Hoş Geldin İndirimi' },
+};
+
 const createOrder = async (req, res) => {
   try {
-    const { user_id, artwork_id, quantity = 1, payment_method, shipping_address, notes } = req.body;
+    const { user_id, artwork_id, quantity = 1, payment_method, shipping_address, notes, coupon_code } = req.body;
 
     // Kullanıcıyı kontrol et
     if (!user_id) {
@@ -27,7 +34,19 @@ const createOrder = async (req, res) => {
     if (!artwork.is_available) return res.status(400).json({ success: false, message: 'Bu eser şu an satışta değil.' });
     if (artwork.stock < quantity) return res.status(400).json({ success: false, message: `Yetersiz stok. Kalan: ${artwork.stock}` });
 
-    const total_price = parseFloat(artwork.price) * quantity;
+    const basePrice = parseFloat(artwork.price) * quantity;
+    let finalNotes = notes || '';
+    let total_price = basePrice;
+
+    if (coupon_code) {
+      const codeUpper = coupon_code.trim().toUpperCase();
+      const found = VALID_COUPONS[codeUpper];
+      if (found) {
+        const discountAmount = (basePrice * found.discount) / 100;
+        total_price = basePrice - discountAmount;
+        finalNotes = `[Kupon: ${codeUpper} (${found.label})] ${finalNotes}`.trim();
+      }
+    }
 
     const order = await Order.create({
       user_id,
@@ -36,7 +55,7 @@ const createOrder = async (req, res) => {
       total_price,
       payment_method: payment_method || 'credit_card',
       shipping_address,
-      notes,
+      notes: finalNotes || null,
       status: 'pending'
     });
 

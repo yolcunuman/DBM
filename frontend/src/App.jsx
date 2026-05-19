@@ -17,6 +17,8 @@ import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
 import ArtistsPage from './pages/ArtistsPage';
 import AdminDashboard from './pages/AdminDashboard';
+import LiveChatWidget from './components/LiveChatWidget';
+import ComparisonDrawer from './components/ComparisonDrawer';
 
 function App() {
   return (
@@ -48,6 +50,8 @@ function App() {
         </main>
 
         <Footer />
+        <LiveChatWidget />
+        <ComparisonDrawer />
       </div>
     </Router>
   );

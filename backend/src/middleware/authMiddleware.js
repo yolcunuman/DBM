@@ -30,3 +30,11 @@ exports.adminOnly = (req, res, next) => {
     res.status(403).json({ error: 'Not authorized as an admin' });
   }
 };
+
+exports.artistOrAdmin = (req, res, next) => {
+  if (req.user && (req.user.role === 'ARTIST' || req.user.role === 'ADMIN')) {
+    next();
+  } else {
+    res.status(403).json({ error: 'Not authorized, must be an artist or admin' });
+  }
+};

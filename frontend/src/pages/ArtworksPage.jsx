@@ -1,19 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Heart, Search, Eye, ShoppingCart, Palette, X, CheckCircle } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Heart, Search, Eye, ShoppingCart, Palette, X, CheckCircle, Scale } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5001/api';
+
+const CAMPAIGN_ARTWORKS = {
+  2: { discount: 20, tag: 'Günün Fırsatı' },
+  5: { discount: 15, tag: 'Haftalık Kampanya' },
+  8: { discount: 25, tag: 'Sanatçı Özel' }
+};
 
 const getCart = () => { try { return JSON.parse(localStorage.getItem('artisana_cart') || '[]'); } catch { return []; } };
 const saveCart = (c) => { localStorage.setItem('artisana_cart', JSON.stringify(c)); window.dispatchEvent(new Event('artisana_cart_updated')); };
 
 const ArtworksPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialSearch = searchParams.get('search') || searchParams.get('artist') || '';
+  
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [favorites, setFavorites] = useState(new Set());
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [categories, setCategories] = useState([]);
   const [sortBy, setSortBy] = useState('newest');
@@ -27,6 +36,11 @@ const ArtworksPage = () => {
     } catch { setCartItems(new Set()); }
   };
 
+  const handleViewArtworkDetail = (artwork) => {
+    setSelectedArtwork(artwork);
+    fetch(`${API_URL}/artworks/${artwork.id}`).catch(err => console.error(err));
+  };
+
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
   const currentUserId = user ? user.id : 1;
@@ -35,7 +49,15 @@ const ArtworksPage = () => {
   const fetchArtworks = () => {
     setLoading(true);
     const params = new URLSearchParams();
-    if (search) params.append('search', search);
+    
+    // URL'deki artist parametresi varsa ve arama boşsa doğrudan artist'i de yolla
+    const urlArtist = searchParams.get('artist');
+    if (urlArtist && !search) {
+      params.append('artist', urlArtist);
+    } else if (search) {
+      params.append('search', search);
+    }
+    
     if (selectedCategory) params.append('category', selectedCategory);
     if (sortBy) params.append('sort', sortBy);
 
@@ -71,8 +93,13 @@ const ArtworksPage = () => {
   }, []);
 
   useEffect(() => {
+    const querySearch = searchParams.get('search') || searchParams.get('artist') || '';
+    setSearch(querySearch);
+  }, [searchParams]);
+
+  useEffect(() => {
     fetchArtworks();
-  }, [selectedCategory, sortBy]);
+  }, [selectedCategory, sortBy, searchParams]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -108,6 +135,40 @@ const ArtworksPage = () => {
       cart.push({ ...artwork, quantity: 1 });
     }
     saveCart(cart);
+  };
+
+  const handleAddToCompare = (artwork, e) => {
+    if (e) e.stopPropagation();
+    const item = {
+      id: artwork.id,
+      title: artwork.title,
+      imageUrl: artwork.image_url || artwork.imageUrl,
+      price: artwork.price,
+      category: artwork.category,
+      artist_name: artwork.artist_name,
+      technique: artwork.technique,
+      dimensions: artwork.dimensions,
+      year: artwork.year
+    };
+    try {
+      const stored = localStorage.getItem('artisana_compare');
+      let compareList = stored ? JSON.parse(stored) : [];
+      if (compareList.length > 0 && compareList[0].type !== 'artwork') {
+        if (!window.confirm('Karşılaştırma listesinde sadece aynı türden ögeler bulunabilir. Yeni ögeyi eklemek için liste temizlenecek. Devam etmek istiyor musunuz?')) return;
+        compareList = [];
+      }
+      if (compareList.some(i => i.id === item.id)) {
+        alert('Bu eser zaten karşılaştırma listesinde.');
+        return;
+      }
+      if (compareList.length >= 3) {
+        alert('En fazla 3 eseri karşılaştırabilirsiniz.');
+        return;
+      }
+      compareList.push({ ...item, type: 'artwork' });
+      localStorage.setItem('artisana_compare', JSON.stringify(compareList));
+      window.dispatchEvent(new Event('artisana-compare-updated'));
+    } catch (err) { console.error(err); }
   };
 
   if (loading && artworks.length === 0) {
@@ -192,6 +253,12 @@ const ArtworksPage = () => {
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-sm text-xs font-bold text-primary">
                   {artwork.category}
                 </div>
+                {/* Kampanya Badge */}
+                {CAMPAIGN_ARTWORKS[artwork.id] && (
+                  <div className="absolute top-12 left-3 bg-amber-500 text-white px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1 animate-pulse z-10">
+                    🔥 {CAMPAIGN_ARTWORKS[artwork.id].tag}
+                  </div>
+                )}
                 {/* Stok Durumu */}
                 {!artwork.is_available && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -213,14 +280,34 @@ const ArtworksPage = () => {
                 </div>
 
                 <div className="pt-3 border-t border-border flex items-center justify-between gap-2">
-                  <div className="text-lg font-bold text-secondary">{Number(artwork.price).toLocaleString('tr-TR')} ₺</div>
+                  <div>
+                    {CAMPAIGN_ARTWORKS[artwork.id] ? (
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-muted line-through">
+                          {Math.round(Number(artwork.price) * (1 + CAMPAIGN_ARTWORKS[artwork.id].discount / 100)).toLocaleString('tr-TR')} ₺
+                        </span>
+                        <span className="text-base font-bold text-amber-500">
+                          {Number(artwork.price).toLocaleString('tr-TR')} ₺
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-lg font-bold text-secondary">{Number(artwork.price).toLocaleString('tr-TR')} ₺</div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => setSelectedArtwork(artwork)}
+                      onClick={() => handleViewArtworkDetail(artwork)}
                       className="p-2 bg-muted-bg text-muted rounded-sm hover:bg-border transition-all"
                       title="Detay"
                     >
                       <Eye size={15} />
+                    </button>
+                    <button
+                      onClick={(e) => handleAddToCompare(artwork, e)}
+                      className="p-2 bg-muted-bg text-muted rounded-sm hover:bg-border hover:text-primary transition-all"
+                      title="Karşılaştır"
+                    >
+                      <Scale size={15} />
                     </button>
                     <button
                       onClick={() => artwork.is_available && handleAddToCart(artwork)}
@@ -307,7 +394,21 @@ const ArtworksPage = () => {
                 {/* Fiyat ve Satın Al */}
                 <div className="pt-4 border-t border-border space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-secondary">{Number(selectedArtwork.price).toLocaleString('tr-TR')} ₺</span>
+                    {CAMPAIGN_ARTWORKS[selectedArtwork.id] ? (
+                      <div className="flex flex-col">
+                        <span className="text-xs text-muted line-through">
+                          {Math.round(Number(selectedArtwork.price) * (1 + CAMPAIGN_ARTWORKS[selectedArtwork.id].discount / 100)).toLocaleString('tr-TR')} ₺
+                        </span>
+                        <span className="text-2xl font-bold text-amber-500 flex items-center gap-2">
+                          {Number(selectedArtwork.price).toLocaleString('tr-TR')} ₺
+                          <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full text-xs font-bold font-sans">
+                            {CAMPAIGN_ARTWORKS[selectedArtwork.id].tag}
+                          </span>
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-2xl font-bold text-secondary">{Number(selectedArtwork.price).toLocaleString('tr-TR')} ₺</span>
+                    )}
                     <span className={`text-xs font-bold px-2 py-1 rounded-sm ${selectedArtwork.is_available ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
                       {selectedArtwork.is_available ? 'Satışta' : 'Tükendi'}
                     </span>
@@ -326,6 +427,13 @@ const ArtworksPage = () => {
                     >
                       <Heart size={18} fill={favorites.has(selectedArtwork.id) ? 'currentColor' : 'none'} />
                       {favorites.has(selectedArtwork.id) ? 'Favoride' : 'Favoriye Ekle'}
+                    </button>
+                    <button
+                      onClick={(e) => handleAddToCompare(selectedArtwork, e)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-sm font-medium transition-colors border border-border text-foreground/70 hover:border-primary hover:text-primary"
+                    >
+                      <Scale size={18} />
+                      Karşılaştır
                     </button>
                     <button
                       onClick={() => selectedArtwork.is_available && handleAddToCart(selectedArtwork)}

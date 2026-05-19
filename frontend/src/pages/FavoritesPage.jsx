@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Heart, Trash2, ShoppingCart, Eye, Palette, CheckCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5001/api';
 const getCart = () => { try { return JSON.parse(localStorage.getItem('artisana_cart') || '[]'); } catch { return []; } };
 const saveCart = (c) => { localStorage.setItem('artisana_cart', JSON.stringify(c)); window.dispatchEvent(new Event('artisana_cart_updated')); };
 

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Send, MessageSquare, Clock, CheckCircle, AlertCircle, LifeBuoy } from 'lucide-react';
-import LiveChatWidget from '../components/LiveChatWidget';
 
 const ContactPage = () => {
   const [tickets, setTickets] = useState([]);
@@ -18,7 +17,7 @@ const ContactPage = () => {
   }, []);
 
   const fetchTickets = () => {
-    fetch(`http://localhost:5000/api/support-tickets?user_id=${user.id}`)
+    fetch(`http://localhost:5001/api/support-tickets?user_id=${user.id}`)
       .then(res => res.json())
       .then(data => {
         if (data.success) {
@@ -32,7 +31,7 @@ const ContactPage = () => {
     e.preventDefault();
     setSubmitStatus('loading');
 
-    fetch('http://localhost:5000/api/support-tickets', {
+    fetch('http://localhost:5001/api/support-tickets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...formData, user_id: user ? user.id : null })
@@ -207,7 +206,6 @@ const ContactPage = () => {
           </div>
         </div>
       </div>
-      <LiveChatWidget />
     </div>
   );
 };

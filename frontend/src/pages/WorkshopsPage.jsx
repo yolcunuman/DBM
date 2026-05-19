@@ -1,8 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Users, X, Search, Tag } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, X, Search, Tag, Scale } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5001/api';
+
+const VALID_COUPONS = {
+  'SANAT10': { discount: 10, label: '%10 İndirim' },
+  'YAZ10': { discount: 10, label: '%10 Yaz Fırsatı İndirimi' },
+  'ARTISANA20': { discount: 20, label: '%20 İndirim' },
+  'HOSGELDIN': { discount: 15, label: '%15 Hoş Geldin İndirimi' },
+};
+
+const CAMPAIGN_WORKSHOPS = {
+  1: { discount: 20, tag: 'Erken Kayıt Fırsatı' },
+  5: { discount: 15, tag: 'Son Kalan Kontenjanlar' },
+  8: { discount: 25, tag: 'Haftanın Atölyesi' }
+};
 
 const WorkshopsPage = () => {
   const [workshops, setWorkshops] = useState([]);
@@ -14,6 +27,60 @@ const WorkshopsPage = () => {
   const [reservationStatus, setReservationStatus] = useState('');
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  
+  // Coupon States
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState('');
+
+  // Customizable Date & Time States
+  const [customDate, setCustomDate] = useState('');
+  const [customTime, setCustomTime] = useState('');
+
+  // Payment States
+  const [paymentMethod, setPaymentMethod] = useState('credit_card');
+  const [cardNo, setCardNo] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [agreeTerms, setAgreeTerms] = useState(false);
+
+  const handleAddToCompare = (workshop, e) => {
+    if (e) e.stopPropagation();
+    const item = {
+      id: workshop.id,
+      title: workshop.title,
+      imageUrl: workshop.image_url,
+      price: workshop.price,
+      category: workshop.category,
+      instructor: workshop.instructor,
+      date: workshop.date,
+      start_time: workshop.start_time,
+      end_time: workshop.end_time,
+      location: workshop.location,
+      capacity: workshop.capacity,
+      enrolled: workshop.enrolled
+    };
+    try {
+      const stored = localStorage.getItem('artisana_compare');
+      let compareList = stored ? JSON.parse(stored) : [];
+      if (compareList.length > 0 && compareList[0].type !== 'workshop') {
+        if (!window.confirm('Karşılaştırma listesinde sadece aynı türden ögeler bulunabilir. Yeni ögeyi eklemek için liste temizlenecek. Devam etmek istiyor musunuz?')) return;
+        compareList = [];
+      }
+      if (compareList.some(i => i.id === item.id)) {
+        alert('Bu atölye zaten karşılaştırma listesinde.');
+        return;
+      }
+      if (compareList.length >= 3) {
+        alert('En fazla 3 atölyeyi karşılaştırabilirsiniz.');
+        return;
+      }
+      compareList.push({ ...item, type: 'workshop' });
+      localStorage.setItem('artisana_compare', JSON.stringify(compareList));
+      window.dispatchEvent(new Event('artisana-compare-updated'));
+    } catch (err) { console.error(err); }
+  };
 
   const fetchWorkshops = () => {
     setLoading(true);
@@ -32,17 +99,100 @@ const WorkshopsPage = () => {
 
   useEffect(() => { fetchWorkshops(); }, [selectedCategory]);
 
-  const openDetail = (w) => { setSelectedWorkshop(w); setActiveTab('info'); setReservationStatus(''); setNumParticipants(1); };
+  const openDetail = (w) => { 
+    setSelectedWorkshop(w); 
+    setActiveTab('info'); 
+    setReservationStatus(''); 
+    setNumParticipants(1); 
+    setCouponCode('');
+    setAppliedCoupon(null);
+    setCouponError('');
+    setCustomDate(w.date || '');
+    setCustomTime(w.start_time?.slice(0, 5) || '10:00');
+  };
   const closeDetail = () => { setSelectedWorkshop(null); setReservationStatus(''); };
+
+  const applyCoupon = () => {
+    setCouponError('');
+    const code = couponCode.trim().toUpperCase();
+    if (!code) { setCouponError('Lütfen bir kupon kodu girin.'); return; }
+    const found = VALID_COUPONS[code];
+    if (found) {
+      setAppliedCoupon({ code, ...found });
+      setCouponCode('');
+    } else {
+      setCouponError('Geçersiz kupon kodu.');
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+  };
 
   const handleReservation = (e) => {
     e.preventDefault();
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setReservationStatus('error: Rezervasyon yapmak için giriş yapmalısınız.');
+      return;
+    }
+
+    if (!agreeTerms) {
+      setReservationStatus('error: Lütfen Mesafeli Satış ve Rezervasyon Sözleşmesi\'ni onaylayın.');
+      return;
+    }
+
+    if (paymentMethod === 'credit_card') {
+      const cleanNo = cardNo.replace(/\s/g, '');
+      if (cleanNo.length !== 16) {
+        setReservationStatus('error: Lütfen 16 haneli geçerli bir kart numarası girin.');
+        return;
+      }
+      if (!cardName.trim()) {
+        setReservationStatus('error: Lütfen kart üzerindeki adı girin.');
+        return;
+      }
+      if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardExpiry)) {
+        setReservationStatus('error: Lütfen geçerli bir son kullanma tarihi girin (AA/YY).');
+        return;
+      }
+      if (cardCvv.length !== 3) {
+        setReservationStatus('error: Lütfen 3 haneli CVV kodunu girin.');
+        return;
+      }
+    }
+
     setReservationStatus('loading');
+
+    const isFlexible = selectedWorkshop.title.includes('Seçilebilir');
+
+    // Build the notes detailing the payment method
+    let paymentNotes = '';
+    if (paymentMethod === 'credit_card') {
+      paymentNotes = `[Ödeme: Kredi Kartı] [Kart: **** **** **** ${cardNo.slice(-4)}]`;
+    } else {
+      paymentNotes = `[Ödeme: Havale/EFT]`;
+    }
+
+    let finalNotes = isFlexible 
+      ? `Tercih Edilen Saat: ${customTime} | ${paymentNotes}`
+      : paymentNotes;
 
     fetch(`${API_URL}/reservations`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: 1, workshop_id: selectedWorkshop.id, num_participants: numParticipants, notes: 'Frontend üzerinden' })
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ 
+        workshop_id: selectedWorkshop.id, 
+        num_participants: numParticipants, 
+        notes: finalNotes,
+        coupon_code: appliedCoupon ? appliedCoupon.code : null,
+        chosen_date: isFlexible ? customDate : selectedWorkshop.date,
+        chosen_time: isFlexible ? customTime : null
+      })
     })
       .then(r => r.json())
       .then(d => {
@@ -51,8 +201,16 @@ const WorkshopsPage = () => {
           const updated = workshops.map(w => w.id === selectedWorkshop.id ? { ...w, enrolled: w.enrolled + numParticipants } : w);
           setWorkshops(updated);
           setSelectedWorkshop(prev => ({ ...prev, enrolled: prev.enrolled + numParticipants }));
+          
+          // Clear states
+          setCardNo('');
+          setCardName('');
+          setCardExpiry('');
+          setCardCvv('');
+          setAgreeTerms(false);
         } else {
-          setReservationStatus('error: ' + d.message);
+          const errMsg = d.message || d.error || 'Rezervasyon oluşturulamadı.';
+          setReservationStatus('error: ' + errMsg);
         }
       })
       .catch(() => setReservationStatus('error: Sunucu hatası'));
@@ -110,6 +268,12 @@ const WorkshopsPage = () => {
                   : <div className="w-full h-full flex items-center justify-center text-primary-light font-serif text-2xl opacity-30">Artisana</div>
                 }
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-sm text-xs font-bold text-primary">{w.category}</div>
+                {/* Kampanya Badge */}
+                {CAMPAIGN_WORKSHOPS[w.id] && (
+                  <div className="absolute top-10 left-3 bg-amber-500 text-white px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1 animate-pulse z-10">
+                    🔥 {CAMPAIGN_WORKSHOPS[w.id].tag}
+                  </div>
+                )}
                 {isFull && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                     <span className="bg-error text-white px-4 py-2 rounded-sm font-bold text-sm">KONTENJAN DOLDU</span>
@@ -145,11 +309,32 @@ const WorkshopsPage = () => {
 
                 {/* Alt: Fiyat + Buton */}
                 <div className="pt-2 border-t border-border flex items-center justify-between mt-auto">
-                  <div className="text-xl font-bold text-secondary">{Number(w.price).toLocaleString('tr-TR')} ₺</div>
-                  <button onClick={() => openDetail(w)}
-                    className="px-4 py-2 bg-primary text-white rounded-sm text-sm font-medium hover:bg-primary-dark transition-colors">
-                    Detaylar
-                  </button>
+                  <div>
+                    {CAMPAIGN_WORKSHOPS[w.id] ? (
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-muted line-through">
+                          {Math.round(Number(w.price) * (1 + CAMPAIGN_WORKSHOPS[w.id].discount / 100)).toLocaleString('tr-TR')} ₺
+                        </span>
+                        <span className="text-base font-bold text-amber-500">
+                          {Number(w.price).toLocaleString('tr-TR')} ₺
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="text-xl font-bold text-secondary">{Number(w.price).toLocaleString('tr-TR')} ₺</div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={(e) => handleAddToCompare(w, e)}
+                      className="p-2 border border-border rounded-sm hover:bg-muted-bg text-muted hover:text-primary transition-colors"
+                      title="Karşılaştır"
+                    >
+                      <Scale size={16} />
+                    </button>
+                    <button onClick={() => openDetail(w)}
+                      className="px-4 py-2 bg-primary text-white rounded-sm text-sm font-medium hover:bg-primary-dark transition-colors">
+                      Detaylar
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -213,49 +398,220 @@ const WorkshopsPage = () => {
                       </div>
                     ))}
                   </div>
-                  <button onClick={() => setActiveTab('reserve')}
-                    disabled={selectedWorkshop.enrolled >= selectedWorkshop.capacity}
-                    className="w-full py-3 bg-primary text-white rounded-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                    {selectedWorkshop.enrolled >= selectedWorkshop.capacity ? 'Kontenjan Doldu' : 'Rezervasyon Yap →'}
-                  </button>
+                  <div className="flex gap-3">
+                    <button onClick={() => setActiveTab('reserve')}
+                      disabled={selectedWorkshop.enrolled >= selectedWorkshop.capacity}
+                      className="flex-1 py-3 bg-primary text-white rounded-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                      {selectedWorkshop.enrolled >= selectedWorkshop.capacity ? 'Kontenjan Doldu' : 'Rezervasyon Yap →'}
+                    </button>
+                    <button onClick={(e) => handleAddToCompare(selectedWorkshop, e)}
+                      className="px-4 py-3 border border-border hover:bg-muted-bg rounded-sm font-medium text-foreground/70 hover:text-primary transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <Scale size={18} /> Karşılaştır
+                    </button>
+                  </div>
                 </div>
               )}
 
               {/* Tab: Rezervasyon */}
               {activeTab === 'reserve' && (
-                <form onSubmit={handleReservation} className="space-y-5">
-                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                    <h3 className="font-bold text-secondary mb-1">{selectedWorkshop.title}</h3>
-                    <p className="text-sm text-muted">{formatDate(selectedWorkshop.date)} • {formatTime(selectedWorkshop.start_time)}</p>
+                !localStorage.getItem('token') ? (
+                  <div className="text-center py-8 space-y-4 border border-dashed border-border rounded-lg bg-muted-bg/30">
+                    <p className="text-muted text-sm">Rezervasyon yapabilmek için lütfen önce giriş yapın.</p>
+                    <a href="/login" className="inline-block px-6 py-2.5 bg-primary text-white rounded-sm font-medium hover:bg-primary-dark transition-colors text-sm">
+                      Giriş Yap
+                    </a>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Katılımcı Sayısı</label>
-                    <input type="number" min="1" max={selectedWorkshop.capacity - selectedWorkshop.enrolled}
-                      value={numParticipants} onChange={e => setNumParticipants(parseInt(e.target.value) || 1)}
-                      className="w-full px-4 py-2.5 border border-border rounded-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" required />
-                    <p className="text-xs text-muted mt-1">Maksimum: {selectedWorkshop.capacity - selectedWorkshop.enrolled} kişi</p>
-                  </div>
-                  <div className="bg-muted-bg p-4 rounded-lg flex justify-between items-center">
-                    <span className="font-medium text-secondary">Toplam Ücret:</span>
-                    <span className="text-2xl font-bold text-primary">{(selectedWorkshop.price * numParticipants).toLocaleString('tr-TR')} ₺</span>
-                  </div>
-                  {reservationStatus === 'success' && (
-                    <div className="text-success bg-success/10 border border-success/20 p-3 rounded-lg text-sm">✅ Rezervasyonunuz başarıyla oluşturuldu!</div>
-                  )}
-                  {reservationStatus.startsWith('error') && (
-                    <div className="text-error bg-error/10 border border-error/20 p-3 rounded-lg text-sm">{reservationStatus.replace('error: ', '')}</div>
-                  )}
-                  <div className="flex gap-3">
-                    <button type="button" onClick={() => setActiveTab('info')}
-                      className="flex-1 py-2.5 border border-border rounded-sm text-foreground/70 hover:bg-muted-bg transition-colors text-sm">
-                      Geri
-                    </button>
-                    <button type="submit" disabled={reservationStatus === 'loading' || reservationStatus === 'success'}
-                      className="flex-1 py-2.5 bg-primary text-white rounded-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 text-sm">
-                      {reservationStatus === 'loading' ? 'İşleniyor...' : 'Rezervasyonu Onayla'}
-                    </button>
-                  </div>
-                </form>
+                ) : (
+                  <form onSubmit={handleReservation} className="space-y-5">
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                      <h3 className="font-bold text-secondary mb-1">{selectedWorkshop.title}</h3>
+                      <p className="text-sm text-muted">{formatDate(selectedWorkshop.date)} • {formatTime(selectedWorkshop.start_time)}</p>
+                    </div>
+
+                    {selectedWorkshop.title.includes('Seçilebilir') && (
+                      <div className="grid grid-cols-2 gap-4 border border-dashed border-primary/30 p-4 rounded-lg bg-primary/5">
+                        <div className="col-span-2 text-xs font-bold text-primary uppercase tracking-wider">🗓️ Kişiye Özel Tarih & Saat Seçimi</div>
+                        <div>
+                          <label className="block text-xs font-medium text-muted mb-1">Tercih Ettiğiniz Tarih</label>
+                          <input type="date" value={customDate} onChange={e => setCustomDate(e.target.value)}
+                            min={new Date().toISOString().split('T')[0]}
+                            className="w-full px-3 py-2 border border-border rounded-sm focus:outline-none focus:border-primary bg-background text-sm text-foreground" required />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-muted mb-1">Tercih Ettiğiniz Saat</label>
+                          <input type="time" value={customTime} onChange={e => setCustomTime(e.target.value)}
+                            className="w-full px-3 py-2 border border-border rounded-sm focus:outline-none focus:border-primary bg-background text-sm text-foreground" required />
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">Katılımcı Sayısı</label>
+                      <input type="number" min="1" max={selectedWorkshop.capacity - selectedWorkshop.enrolled}
+                        value={numParticipants} onChange={e => setNumParticipants(parseInt(e.target.value) || 1)}
+                        className="w-full px-4 py-2.5 border border-border rounded-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-background" required />
+                      <p className="text-xs text-muted mt-1">Maksimum: {selectedWorkshop.capacity - selectedWorkshop.enrolled} kişi</p>
+                    </div>
+
+                    {/* Kupon Kodu Girişi */}
+                    <div className="border-t border-border pt-4">
+                      <label className="block text-sm font-medium text-foreground mb-2">İndirim Kuponu</label>
+                      {appliedCoupon ? (
+                        <div className="flex justify-between items-center bg-success/5 border border-success/20 p-2.5 rounded-sm">
+                          <div className="text-sm text-success font-medium">
+                            🎟️ {appliedCoupon.code} uygulandı ({appliedCoupon.label})
+                          </div>
+                          <button type="button" onClick={removeCoupon} className="text-xs text-error hover:underline">
+                            Kuponu Kaldır
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input type="text" value={couponCode} onChange={e => setCouponCode(e.target.value)}
+                            placeholder="Örn: YAZ10"
+                            className="flex-1 px-4 py-2 border border-border rounded-sm text-sm uppercase bg-background focus:outline-none focus:border-primary" />
+                          <button type="button" onClick={applyCoupon}
+                            className="px-4 py-2 bg-secondary text-white rounded-sm text-sm font-medium hover:bg-secondary-dark transition-colors">
+                            Uygula
+                          </button>
+                        </div>
+                      )}
+                      {couponError && <p className="text-xs text-error mt-1">{couponError}</p>}
+                    </div>
+
+                    {/* Ödeme Yöntemi ve Bilgileri */}
+                    <div className="border-t border-border pt-4 space-y-3">
+                      <label className="block text-sm font-medium text-foreground mb-1 font-bold">Ödeme Yöntemi Seçin *</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <label className={`flex items-center gap-2 p-2.5 border rounded-sm cursor-pointer transition-colors ${paymentMethod === 'credit_card' ? 'border-primary bg-primary/5 text-primary font-medium' : 'border-border text-muted hover:border-primary/50'}`}>
+                          <input type="radio" name="paymentMethod" value="credit_card" checked={paymentMethod === 'credit_card'} onChange={() => setPaymentMethod('credit_card')} className="accent-primary" />
+                          <span className="text-xs">Kredi / Banka Kartı</span>
+                        </label>
+                        <label className={`flex items-center gap-2 p-2.5 border rounded-sm cursor-pointer transition-colors ${paymentMethod === 'bank_transfer' ? 'border-primary bg-primary/5 text-primary font-medium' : 'border-border text-muted hover:border-primary/50'}`}>
+                          <input type="radio" name="paymentMethod" value="bank_transfer" checked={paymentMethod === 'bank_transfer'} onChange={() => setPaymentMethod('bank_transfer')} className="accent-primary" />
+                          <span className="text-xs">Havale / EFT</span>
+                        </label>
+                      </div>
+
+                      {paymentMethod === 'credit_card' ? (
+                        <div className="bg-muted-bg/50 border border-border rounded-lg p-3 space-y-3">
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-muted mb-1">Kart Numarası</label>
+                            <input 
+                              type="text" 
+                              value={cardNo} 
+                              onChange={e => setCardNo(e.target.value.replace(/\D/g,'').replace(/(\d{4})/g,'$1 ').trim())} 
+                              placeholder="0000 0000 0000 0000" 
+                              maxLength={19} 
+                              className="w-full px-3 py-2 border border-border rounded bg-background text-sm focus:outline-none focus:border-primary" 
+                              required={paymentMethod === 'credit_card'}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] uppercase font-bold text-muted mb-1">Kart Üzerindeki İsim</label>
+                            <input 
+                              type="text" 
+                              value={cardName} 
+                              onChange={e => setCardName(e.target.value)} 
+                              placeholder="Ad Soyad" 
+                              className="w-full px-3 py-2 border border-border rounded bg-background text-sm focus:outline-none focus:border-primary" 
+                              required={paymentMethod === 'credit_card'}
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[10px] uppercase font-bold text-muted mb-1">S.K. Tarihi</label>
+                              <input 
+                                type="text" 
+                                value={cardExpiry} 
+                                onChange={e => { let v = e.target.value.replace(/\D/g,''); if(v.length>=2) v=v.slice(0,2)+'/'+v.slice(2,4); setCardExpiry(v); }} 
+                                placeholder="AA/YY" 
+                                maxLength={5} 
+                                className="w-full px-3 py-2 border border-border rounded bg-background text-sm focus:outline-none focus:border-primary" 
+                                required={paymentMethod === 'credit_card'}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] uppercase font-bold text-muted mb-1">CVV</label>
+                              <input 
+                                type="text" 
+                                value={cardCvv} 
+                                onChange={e => setCardCvv(e.target.value.replace(/\D/g,''))} 
+                                placeholder="CVV" 
+                                maxLength={3} 
+                                className="w-full px-3 py-2 border border-border rounded bg-background text-sm focus:outline-none focus:border-primary" 
+                                required={paymentMethod === 'credit_card'}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-muted-bg/50 border border-border rounded-lg p-3 text-xs space-y-2 text-muted leading-relaxed">
+                          <p className="font-bold text-secondary">Banka Hesap Bilgilerimiz:</p>
+                          <p><strong>Banka:</strong> Artisana Sanat A.Ş.</p>
+                          <p><strong>IBAN:</strong> TR99 0006 2000 0000 1234 5678 90</p>
+                          <p className="text-[10px] text-error-light">* Lütfen havale açıklama kısmına kayıt olduğunuz atölye ismini yazınız.</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Sözleşme Onayı */}
+                    <div className="pt-2">
+                      <label className="flex items-start gap-2 text-xs cursor-pointer text-muted leading-relaxed">
+                        <input 
+                          type="checkbox" 
+                          checked={agreeTerms} 
+                          onChange={e => setAgreeTerms(e.target.checked)} 
+                          className="accent-primary w-4 h-4 mt-0.5" 
+                          required 
+                        />
+                        <span>
+                          <span className="text-primary hover:underline font-medium">Mesafeli Satış Sözleşmesi</span> ve <span className="text-primary hover:underline font-medium">Rezervasyon Koşullarını</span> okudum, onaylıyorum.
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="bg-muted-bg p-4 rounded-lg space-y-2 border border-border">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted">Ara Toplam:</span>
+                        <span className="font-medium text-foreground">{(selectedWorkshop.price * numParticipants).toLocaleString('tr-TR')} ₺</span>
+                      </div>
+                      {appliedCoupon && (
+                        <div className="flex justify-between items-center text-sm text-success font-medium">
+                          <span>İndirim (%{appliedCoupon.discount}):</span>
+                          <span>- {((selectedWorkshop.price * numParticipants * appliedCoupon.discount) / 100).toLocaleString('tr-TR')} ₺</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center border-t border-border/60 pt-2 font-bold text-secondary">
+                        <span>Toplam Ücret:</span>
+                        <span className="text-2xl text-primary font-bold">
+                          {(
+                            selectedWorkshop.price * numParticipants -
+                            (appliedCoupon ? (selectedWorkshop.price * numParticipants * appliedCoupon.discount) / 100 : 0)
+                          ).toLocaleString('tr-TR')} ₺
+                        </span>
+                      </div>
+                    </div>
+
+                    {reservationStatus === 'success' && (
+                      <div className="text-success bg-success/10 border border-success/20 p-3 rounded-lg text-sm">✅ Rezervasyonunuz başarıyla oluşturuldu!</div>
+                    )}
+                    {reservationStatus.startsWith('error') && (
+                      <div className="text-error bg-error/10 border border-error/20 p-3 rounded-lg text-sm">{reservationStatus.replace('error: ', '')}</div>
+                    )}
+                    <div className="flex gap-3">
+                      <button type="button" onClick={() => setActiveTab('info')}
+                        className="flex-1 py-2.5 border border-border rounded-sm text-foreground/70 hover:bg-muted-bg transition-colors text-sm">
+                        Geri
+                      </button>
+                      <button type="submit" disabled={reservationStatus === 'loading' || reservationStatus === 'success'}
+                        className="flex-1 py-2.5 bg-primary text-white rounded-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 text-sm">
+                        {reservationStatus === 'loading' ? 'İşleniyor...' : 'Rezervasyonu Onayla'}
+                      </button>
+                    </div>
+                  </form>
+                )
               )}
 
               {/* Tab: Yorumlar */}

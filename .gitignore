@@ -1,4 +1,9 @@
 node_modules/
 dev.db
+backend/dev.db
 .env
 package-lock.json
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3

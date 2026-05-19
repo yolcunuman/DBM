@@ -3,7 +3,7 @@
 //  Geliştirici 2
 // ═══════════════════════════════════════════════
 
-const { Workshop, Reservation } = require('../models');
+const { Workshop, Reservation, User } = require('../models');
 const { Op } = require('sequelize');
 
 // ─── 10 Adet Atölye Seed Verisi ─────────────────
@@ -20,7 +20,7 @@ const SEED_WORKSHOPS = [
     capacity: 15,
     enrolled: 8,
     location: 'Artisana Stüdyo, Beyoğlu - İstanbul',
-    image_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Tsunami_by_hokusai_19th_century.jpg/640px-Tsunami_by_hokusai_19th_century.jpg',
+    image_url: 'https://images.unsplash.com/photo-1580136579312-94651dfd596d?w=600',
     status: 'active'
   },
   {
@@ -35,7 +35,7 @@ const SEED_WORKSHOPS = [
     capacity: 12,
     enrolled: 10,
     location: 'Artisana Seramik Atölyesi, Karaköy - İstanbul',
-    image_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Moai_Rano_rarridge.jpg/640px-Moai_Rano_rarridge.jpg',
+    image_url: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=600',
     status: 'active'
   },
   {
@@ -50,7 +50,7 @@ const SEED_WORKSHOPS = [
     capacity: 10,
     enrolled: 7,
     location: 'Artisana Galeri Atölyesi, Nişantaşı - İstanbul',
-    image_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/402px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg',
+    image_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600',
     status: 'active'
   },
   {
@@ -65,7 +65,7 @@ const SEED_WORKSHOPS = [
     capacity: 20,
     enrolled: 13,
     location: 'Artisana Dijital Stüdyo, Kadıköy - İstanbul',
-    image_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Claude_Monet_-_Water_Lilies_-_1906%2C_Ryerson.jpg/640px-Claude_Monet_-_Water_Lilies_-_1906%2C_Ryerson.jpg',
+    image_url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600',
     status: 'active'
   },
   {
@@ -80,7 +80,7 @@ const SEED_WORKSHOPS = [
     capacity: 8,
     enrolled: 6,
     location: 'Artisana Seramik Fırın, Moda - İstanbul',
-    image_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/640px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg',
+    image_url: 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600',
     status: 'active'
   },
   {
@@ -95,7 +95,7 @@ const SEED_WORKSHOPS = [
     capacity: 16,
     enrolled: 5,
     location: 'Artisana Workshop, Cihangir - İstanbul',
-    image_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/The_Scream.jpg/640px-The_Scream.jpg',
+    image_url: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600',
     status: 'active'
   },
   {
@@ -110,7 +110,7 @@ const SEED_WORKSHOPS = [
     capacity: 18,
     enrolled: 14,
     location: 'Artisana Dijital Merkezi, Şişli - İstanbul',
-    image_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Garden_of_Earthly_Delights_by_Bosch_High_Resolution.jpg/640px-The_Garden_of_Earthly_Delights_by_Bosch_High_Resolution.jpg',
+    image_url: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600',
     status: 'active'
   },
   {
@@ -125,7 +125,7 @@ const SEED_WORKSHOPS = [
     capacity: 14,
     enrolled: 9,
     location: 'Artisana El Sanatları Atölyesi, Üsküdar - İstanbul',
-    image_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/VanGogh-starry_night_ballance1.jpg/640px-VanGogh-starry_night_ballance1.jpg',
+    image_url: 'https://images.unsplash.com/photo-1452860606245-08f5c4e85638?w=600',
     status: 'active'
   },
   {
@@ -140,7 +140,7 @@ const SEED_WORKSHOPS = [
     capacity: 12,
     enrolled: 4,
     location: 'Artisana Büyük Salon, Beylikdüzü - İstanbul',
-    image_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/640px-Good_Food_Display_-_NCI_Visuals_Online.jpg',
+    image_url: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600',
     status: 'active'
   },
   {
@@ -155,7 +155,52 @@ const SEED_WORKSHOPS = [
     capacity: 8,
     enrolled: 7,
     location: 'Artisana Cam Stüdyo, Pendik - İstanbul',
-    image_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Felis_silvestris_catus_lying_on_rice_straw.jpg/640px-Felis_silvestris_catus_lying_on_rice_straw.jpg',
+    image_url: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?w=600',
+    status: 'active'
+  },
+  {
+    title: 'Kişiye Özel Seramik Atölyesi (Tarih/Saat Seçilebilir)',
+    description: 'Tamamen sizin seçtiğiniz gün ve saatte gerçekleştirilen, eğitmenle birebir çalışacağınız özel seramik dersi.',
+    instructor: 'Elif Yılmaz',
+    category: 'Özel Ders',
+    date: '2025-09-01',
+    start_time: '10:00:00',
+    end_time: '12:00:00',
+    price: 1500,
+    capacity: 5,
+    enrolled: 0,
+    location: 'Artisana Seramik Atölyesi, Karaköy - İstanbul',
+    image_url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600',
+    status: 'active'
+  },
+  {
+    title: 'Birebir Resim ve Teknik Danışmanlık (Tarih/Saat Seçilebilir)',
+    description: 'Kendi seviyenize ve ilgi alanınıza uygun olarak gün/saat belirleyebileceğiniz birebir resim atölyesi.',
+    instructor: 'Ayşe Korkmaz',
+    category: 'Özel Ders',
+    date: '2025-09-02',
+    start_time: '14:00:00',
+    end_time: '16:00:00',
+    price: 1200,
+    capacity: 5,
+    enrolled: 0,
+    location: 'Artisana Stüdyo, Beyoğlu - İstanbul',
+    image_url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600',
+    status: 'active'
+  },
+  {
+    title: 'Kişiye Özel Heykel ve Form Eğitimi (Tarih/Saat Seçilebilir)',
+    description: 'Heykel sanatına giriş yapmak veya kendi projenizi geliştirmek için tarihini ve saatini sizin belirlediğiniz özel heykel dersi.',
+    instructor: 'Baran Yıldız',
+    category: 'Özel Ders',
+    date: '2025-09-03',
+    start_time: '16:00:00',
+    end_time: '18:00:00',
+    price: 1800,
+    capacity: 5,
+    enrolled: 0,
+    location: 'Artisana Seramik Atölyesi, Karaköy - İstanbul',
+    image_url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600',
     status: 'active'
   }
 ];
@@ -164,7 +209,7 @@ const SEED_WORKSHOPS = [
 const seedWorkshops = async (req, res) => {
   try {
     const count = await Workshop.count();
-    if (count >= 10) {
+    if (count >= 13) {
       const data = await Workshop.findAll({ order: [['date', 'ASC']] });
       if (res && res.json) return res.json({ success: true, message: 'Atölyeler zaten mevcut.', data });
       return;
@@ -189,10 +234,12 @@ const getAllWorkshops = async (req, res) => {
     if (category) where.category = category;
     if (status) where.status = status;
     if (search) {
+      const isSqlite = Workshop.sequelize.options.dialect === 'sqlite';
+      const likeOp = isSqlite ? Op.like : Op.iLike;
       where[Op.or] = [
-        { title: { [Op.iLike]: `%${search}%` } },
-        { description: { [Op.iLike]: `%${search}%` } },
-        { instructor: { [Op.iLike]: `%${search}%` } },
+        { title: { [likeOp]: `%${search}%` } },
+        { description: { [likeOp]: `%${search}%` } },
+        { instructor: { [likeOp]: `%${search}%` } },
       ];
     }
 
@@ -286,7 +333,8 @@ const deleteWorkshop = async (req, res) => {
 // POST /api/reservations — Rezervasyon yap
 const createReservation = async (req, res) => {
   try {
-    const { user_id, workshop_id, num_participants, notes } = req.body;
+    const { workshop_id, num_participants, notes, coupon_code, chosen_date, chosen_time } = req.body;
+    const user_id = req.user.role === 'ADMIN' && req.body.user_id ? req.body.user_id : req.user.id;
 
     const workshop = await Workshop.findByPk(workshop_id);
     if (!workshop) {
@@ -301,15 +349,32 @@ const createReservation = async (req, res) => {
       });
     }
 
-    const total_price = parseFloat(workshop.price) * num_participants;
+    let discount = 0;
+    if (coupon_code) {
+      const code = coupon_code.trim().toUpperCase();
+      if (code === 'SANAT10' || code === 'YAZ10') discount = 10;
+      else if (code === 'ARTISANA20') discount = 20;
+      else if (code === 'HOSGELDIN') discount = 15;
+    }
+
+    const basePrice = parseFloat(workshop.price) * num_participants;
+    const total_price = basePrice - (basePrice * discount) / 100;
+
+    let finalNotes = notes || '';
+    if (chosen_time) {
+      finalNotes = `[Tercih Edilen Saat: ${chosen_time}] ${finalNotes}`.trim();
+    }
+    if (coupon_code) {
+      finalNotes = `${finalNotes} (Kupon: ${coupon_code})`.trim();
+    }
 
     const reservation = await Reservation.create({
       user_id,
       workshop_id,
       num_participants,
       total_price,
-      reservation_date: new Date(),
-      notes,
+      reservation_date: chosen_date || new Date(),
+      notes: finalNotes || null,
     });
 
     await workshop.increment('enrolled', { by: num_participants });
@@ -326,11 +391,20 @@ const getReservations = async (req, res) => {
   try {
     const { user_id } = req.query;
     const where = {};
-    if (user_id) where.user_id = user_id;
+    
+    // Admin değilse sadece kendi rezervasyonlarını görebilir
+    if (req.user.role !== 'ADMIN') {
+      where.user_id = req.user.id;
+    } else if (user_id) {
+      where.user_id = user_id;
+    }
 
     const reservations = await Reservation.findAll({
       where,
-      include: [{ association: 'workshop', attributes: ['id', 'title', 'date', 'start_time', 'location', 'image_url', 'instructor', 'category'] }],
+      include: [
+        { association: 'workshop', attributes: ['id', 'title', 'date', 'start_time', 'location', 'image_url', 'instructor', 'category', 'price'] },
+        { association: 'user', attributes: ['id', 'name', 'email'] }
+      ],
       order: [['created_at', 'DESC']],
     });
 
@@ -349,19 +423,54 @@ const updateReservation = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Rezervasyon bulunamadı.' });
     }
 
-    if (req.body.num_participants && req.body.num_participants !== reservation.num_participants) {
-      const workshop = await Workshop.findByPk(reservation.workshop_id);
-      const diff = req.body.num_participants - reservation.num_participants;
-      const availableSpots = workshop.capacity - workshop.enrolled;
+    // Admin değilse ve kendi rezervasyonu değilse güncellemeye izin verme
+    if (req.user.role !== 'ADMIN' && reservation.user_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Bu işlemi yapmaya yetkiniz yok.' });
+    }
 
-      if (diff > availableSpots) {
-        return res.status(400).json({
-          success: false,
-          message: `Yetersiz kontenjan. Kalan: ${availableSpots} kişilik yer.`,
-        });
+    const workshop = await Workshop.findByPk(reservation.workshop_id);
+    if (!workshop) {
+      return res.status(404).json({ success: false, message: 'İlişkili atölye bulunamadı.' });
+    }
+
+    // 1. Durum Değişikliği ve Kontenjan Güncellemesi
+    if (req.body.status && req.body.status !== reservation.status) {
+      const oldStatus = reservation.status;
+      const newStatus = req.body.status;
+
+      // Eskiden iptal edilmiş olan bir rezervasyonu onaylıyor veya beklemeye alıyorsak (kontenjan artmalı)
+      if (oldStatus === 'cancelled' && (newStatus === 'confirmed' || newStatus === 'pending')) {
+        const availableSpots = workshop.capacity - workshop.enrolled;
+        if (reservation.num_participants > availableSpots) {
+          return res.status(400).json({
+            success: false,
+            message: `Yetersiz kontenjan. Atölyede kalan yer: ${availableSpots} kişi.`,
+          });
+        }
+        await workshop.increment('enrolled', { by: reservation.num_participants });
       }
+      // Eskiden onaylı veya bekleyen olan bir rezervasyonu iptal ediyorsak (kontenjan azalmalı)
+      else if ((oldStatus === 'confirmed' || oldStatus === 'pending') && newStatus === 'cancelled') {
+        await workshop.decrement('enrolled', { by: reservation.num_participants });
+      }
+    }
 
-      await workshop.increment('enrolled', { by: diff });
+    // 2. Katılımcı Sayısı Değişikliği (durum iptal değilse)
+    if (req.body.num_participants && req.body.num_participants !== reservation.num_participants) {
+      // Eğer rezervasyon iptal durumunda değilse kontenjanı güncelle
+      if (reservation.status !== 'cancelled' && req.body.status !== 'cancelled') {
+        const diff = req.body.num_participants - reservation.num_participants;
+        const availableSpots = workshop.capacity - workshop.enrolled;
+
+        if (diff > availableSpots) {
+          return res.status(400).json({
+            success: false,
+            message: `Yetersiz kontenjan. Kalan: ${availableSpots} kişilik yer.`,
+          });
+        }
+
+        await workshop.increment('enrolled', { by: diff });
+      }
       req.body.total_price = parseFloat(workshop.price) * req.body.num_participants;
     }
 
@@ -381,8 +490,13 @@ const cancelReservation = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Rezervasyon bulunamadı.' });
     }
 
+    // Admin değilse ve kendi rezervasyonu değilse iptale izin verme
+    if (req.user.role !== 'ADMIN' && reservation.user_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Bu işlemi yapmaya yetkiniz yok.' });
+    }
+
     const workshop = await Workshop.findByPk(reservation.workshop_id);
-    if (workshop) {
+    if (workshop && reservation.status !== 'cancelled') {
       await workshop.decrement('enrolled', { by: reservation.num_participants });
     }
 
