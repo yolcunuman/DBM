@@ -1,6 +1,95 @@
 import React, { useState, useEffect } from 'react';
 import { Scale, X, Trash2, Calendar, Users, MapPin } from 'lucide-react';
 
+const analyzeComparisons = (items, type) => {
+  if (!items || items.length < 2) return null;
+
+  const validItems = items.filter(Boolean);
+  
+  if (type === 'artwork') {
+    const prices = validItems.map(i => Number(i.price) || 0);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const cheapest = validItems.find(i => (Number(i.price) || 0) === minPrice);
+    const premium = validItems.find(i => (Number(i.price) || 0) === maxPrice);
+    
+    const years = validItems.map(i => parseInt(i.year) || 0).filter(y => y > 0);
+    let newest = null;
+    if (years.length > 0) {
+      const maxYear = Math.max(...years);
+      newest = validItems.find(i => (parseInt(i.year) || 0) === maxYear);
+    }
+    
+    const parseArea = (dimStr) => {
+      if (!dimStr) return 0;
+      const parts = dimStr.toLowerCase().match(/(\d+)\s*(x|\*)\s*(\d+)/);
+      if (parts && parts[1] && parts[3]) {
+        return parseInt(parts[1]) * parseInt(parts[3]);
+      }
+      return 0;
+    };
+    const dimensions = validItems.map(i => parseArea(i.dimensions));
+    const maxArea = Math.max(...dimensions);
+    const largest = maxArea > 0 ? validItems.find(i => parseArea(i.dimensions) === maxArea) : null;
+
+    let bulletPoints = [];
+    bulletPoints.push(`💵 **En Uygun Fiyat:** "${cheapest.title}" (${minPrice.toLocaleString('tr-TR')} ₺) bütçe dostu bir sanat yatırımı seçeneğidir.`);
+    if (premium && premium.id !== cheapest.id) {
+      bulletPoints.push(`💎 **En Değerli Eser:** "${premium.title}" (${maxPrice.toLocaleString('tr-TR')} ₺) koleksiyon değeri en yüksek eserdir.`);
+    }
+    if (largest) {
+      bulletPoints.push(`📐 **En Büyük Boyut:** "${largest.title}" (${largest.dimensions}) sergi alanı açısından en görkemli seçenektir.`);
+    }
+    if (newest) {
+      bulletPoints.push(`🎨 **En Güncel Çalışma:** "${newest.title}" (${newest.year || 'Yakın Dönem'}) sanatçının en güncel tarzını yansıtmaktadır.`);
+    }
+
+    let recommendation = `**Tavsiye:** Bütçenizi ön plande tutuyorsanız **${cheapest.title}** harika bir başlangıçtır. Ancak duvarınızda geniş ve iddialı bir odak noktası yaratmak istiyorsanız ${largest ? `**${largest.title}**` : `**${premium.title}**`} seçeneğini değerlendirmelisiniz.`;
+
+    return {
+      title: 'Sanat Eseri Karşılaştırma Sonuç Analizi',
+      bulletPoints,
+      recommendation
+    };
+  } else {
+    const prices = validItems.map(i => Number(i.price) || 0);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const cheapest = validItems.find(i => (Number(i.price) || 0) === minPrice);
+    const premium = validItems.find(i => (Number(i.price) || 0) === maxPrice);
+
+    const spots = validItems.map(i => (i.capacity - i.enrolled) || 0);
+    const maxSpots = Math.max(...spots);
+    const mostAvailable = validItems.find(i => ((i.capacity - i.enrolled) || 0) === maxSpots);
+
+    const dates = validItems.map(i => new Date(i.date).getTime()).filter(t => !isNaN(t));
+    let soonest = null;
+    if (dates.length > 0) {
+      const minDate = Math.min(...dates);
+      soonest = validItems.find(i => new Date(i.date).getTime() === minDate);
+    }
+
+    let bulletPoints = [];
+    bulletPoints.push(`💵 **En Uygun Fiyat:** "${cheapest.title}" (${minPrice.toLocaleString('tr-TR')} ₺) ile en ekonomik atölye eğitimidir.`);
+    if (mostAvailable) {
+      const avail = mostAvailable.capacity - mostAvailable.enrolled;
+      bulletPoints.push(`👥 **En Müsait Kontenjan:** "${mostAvailable.title}" (${avail} boş yer) grup katılımı için en uygun seçenektir.`);
+    }
+    if (soonest) {
+      const dateStr = new Date(soonest.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+      bulletPoints.push(`📅 **İlk Başlayacak Etkinlik:** "${soonest.title}" (${dateStr}) takvimde en yakın tarihli atölyedir.`);
+    }
+
+    let recommendation = `**Tavsiye:** Hemen başlayıp bütçenizi yormayacak bir eğitim istiyorsanız **${cheapest.title}** sizin için idealdir. ${mostAvailable && mostAvailable.id !== cheapest.id ? `Arkadaşlarınızla birlikte katılım planlıyorsanız geniş kontenjana sahip **${mostAvailable.title}** tercih edilebilir.` : ''}`;
+
+    return {
+      title: 'Atölye & Etkinlik Karşılaştırma Sonuç Analizi',
+      bulletPoints,
+      recommendation
+    };
+  }
+};
+
 const ComparisonDrawer = () => {
   const [items, setItems] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -24,8 +113,13 @@ const ComparisonDrawer = () => {
 
   useEffect(() => {
     loadItems();
+    const handleOpen = () => setIsOpen(true);
     window.addEventListener('artisana-compare-updated', loadItems);
-    return () => window.removeEventListener('artisana-compare-updated', loadItems);
+    window.addEventListener('artisana-compare-open', handleOpen);
+    return () => {
+      window.removeEventListener('artisana-compare-updated', loadItems);
+      window.removeEventListener('artisana-compare-open', handleOpen);
+    };
   }, []);
 
   const handleRemove = (id) => {
@@ -45,6 +139,7 @@ const ComparisonDrawer = () => {
     if (items.length === 0) return;
     
     const activeTitle = `${itemType === 'artwork' ? 'Eser' : 'Atölye'} Karşılaştırması - ${new Date().toLocaleDateString('tr-TR')}`;
+    const analysisObj = analyzeComparisons(items, itemType);
     
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
@@ -59,6 +154,7 @@ const ComparisonDrawer = () => {
         title: activeTitle,
         type: itemType,
         items: items,
+        analysis: analysisObj,
         date: new Date().toISOString()
       };
       
@@ -80,6 +176,7 @@ const ComparisonDrawer = () => {
   if (items.length === 0) return null;
 
   const itemType = items[0]?.type || 'artwork';
+  const analysis = analyzeComparisons(items, itemType);
 
   return (
     <>
@@ -242,6 +339,30 @@ const ComparisonDrawer = () => {
                 </div>
               ))}
             </div>
+
+            {/* Dynamic Comparison Analysis */}
+            {analysis && (
+              <div className="mt-8 bg-gradient-to-br from-primary/5 to-amber-500/5 dark:from-primary/10 dark:to-amber-500/10 border border-primary/20 rounded-xl p-5 md:p-6 space-y-4">
+                <div className="flex items-center gap-2 border-b border-primary/10 pb-3">
+                  <span className="text-xl">📊</span>
+                  <h4 className="font-serif font-bold text-secondary text-base md:text-lg">{analysis.title}</h4>
+                </div>
+                
+                <ul className="space-y-2 text-xs md:text-sm text-foreground/95">
+                  {analysis.bulletPoints.map((bp, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-primary mt-1">•</span>
+                      <span dangerouslySetInnerHTML={{ __html: bp.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                    </li>
+                  ))}
+                </ul>
+                
+                <div className="mt-4 pt-3 border-t border-primary/10 text-xs md:text-sm italic text-foreground/80 bg-primary/5 dark:bg-primary/20 p-3.5 rounded-lg">
+                  <span dangerouslySetInnerHTML={{ __html: analysis.recommendation.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       )}

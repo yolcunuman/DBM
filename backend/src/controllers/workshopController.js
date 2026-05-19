@@ -349,16 +349,22 @@ const createReservation = async (req, res) => {
       });
     }
 
-    let discount = 0;
-    if (coupon_code) {
-      const code = coupon_code.trim().toUpperCase();
-      if (code === 'SANAT10' || code === 'YAZ10') discount = 10;
-      else if (code === 'ARTISANA20') discount = 20;
-      else if (code === 'HOSGELDIN') discount = 15;
-    }
-
     const basePrice = parseFloat(workshop.price) * num_participants;
-    const total_price = basePrice - (basePrice * discount) / 100;
+    let currentPrice = basePrice;
+    if (coupon_code) {
+      const codes = coupon_code.split('+').map(c => c.trim().toUpperCase());
+      for (const code of codes) {
+        let discountPct = 0;
+        if (code === 'SANAT10' || code === 'YAZ10') discountPct = 10;
+        else if (code === 'ARTISANA20') discountPct = 20;
+        else if (code === 'HOSGELDIN') discountPct = 15;
+        
+        if (discountPct > 0) {
+          currentPrice -= (currentPrice * discountPct) / 100;
+        }
+      }
+    }
+    const total_price = currentPrice;
 
     let finalNotes = notes || '';
     if (chosen_time) {

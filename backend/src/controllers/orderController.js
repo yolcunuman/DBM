@@ -39,12 +39,21 @@ const createOrder = async (req, res) => {
     let total_price = basePrice;
 
     if (coupon_code) {
-      const codeUpper = coupon_code.trim().toUpperCase();
-      const found = VALID_COUPONS[codeUpper];
-      if (found) {
-        const discountAmount = (basePrice * found.discount) / 100;
-        total_price = basePrice - discountAmount;
-        finalNotes = `[Kupon: ${codeUpper} (${found.label})] ${finalNotes}`.trim();
+      const codes = coupon_code.split('+').map(c => c.trim().toUpperCase());
+      let currentPrice = basePrice;
+      let appliedLabels = [];
+      
+      for (const code of codes) {
+        const found = VALID_COUPONS[code];
+        if (found) {
+          const discountAmount = (currentPrice * found.discount) / 100;
+          currentPrice -= discountAmount;
+          appliedLabels.push(`${code} (-%${found.discount})`);
+        }
+      }
+      total_price = currentPrice;
+      if (appliedLabels.length > 0) {
+        finalNotes = `[Kuponlar: ${appliedLabels.join(', ')}] ${finalNotes}`.trim();
       }
     }
 

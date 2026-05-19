@@ -4,6 +4,95 @@ import { Star, Package, CheckCircle2, Truck, Home, Clock, Palette } from 'lucide
 
 const API_URL = 'http://localhost:5001/api';
 
+const analyzeComparisons = (items, type) => {
+  if (!items || items.length < 2) return null;
+
+  const validItems = items.filter(Boolean);
+  
+  if (type === 'artwork') {
+    const prices = validItems.map(i => Number(i.price) || 0);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const cheapest = validItems.find(i => (Number(i.price) || 0) === minPrice);
+    const premium = validItems.find(i => (Number(i.price) || 0) === maxPrice);
+    
+    const years = validItems.map(i => parseInt(i.year) || 0).filter(y => y > 0);
+    let newest = null;
+    if (years.length > 0) {
+      const maxYear = Math.max(...years);
+      newest = validItems.find(i => (parseInt(i.year) || 0) === maxYear);
+    }
+    
+    const parseArea = (dimStr) => {
+      if (!dimStr) return 0;
+      const parts = dimStr.toLowerCase().match(/(\d+)\s*(x|\*)\s*(\d+)/);
+      if (parts && parts[1] && parts[3]) {
+        return parseInt(parts[1]) * parseInt(parts[3]);
+      }
+      return 0;
+    };
+    const dimensions = validItems.map(i => parseArea(i.dimensions));
+    const maxArea = Math.max(...dimensions);
+    const largest = maxArea > 0 ? validItems.find(i => parseArea(i.dimensions) === maxArea) : null;
+
+    let bulletPoints = [];
+    bulletPoints.push(`💵 **En Uygun Fiyat:** "${cheapest.title}" (${minPrice.toLocaleString('tr-TR')} ₺) bütçe dostu bir sanat yatırımı seçeneğidir.`);
+    if (premium && premium.id !== cheapest.id) {
+      bulletPoints.push(`💎 **En Değerli Eser:** "${premium.title}" (${maxPrice.toLocaleString('tr-TR')} ₺) koleksiyon değeri en yüksek eserdir.`);
+    }
+    if (largest) {
+      bulletPoints.push(`📐 **En Büyük Boyut:** "${largest.title}" (${largest.dimensions}) sergi alanı açısından en görkemli seçenektir.`);
+    }
+    if (newest) {
+      bulletPoints.push(`🎨 **En Güncel Çalışma:** "${newest.title}" (${newest.year || 'Yakın Dönem'}) sanatçının en güncel tarzını yansıtmaktadır.`);
+    }
+
+    let recommendation = `**Tavsiye:** Bütçenizi ön plande tutuyorsanız **${cheapest.title}** harika bir başlangıçtır. Duvarınızda geniş bir odak noktası yaratmak istiyorsanız ${largest ? `**${largest.title}**` : `**${premium.title}**`} seçeneğini değerlendirmelisiniz.`;
+
+    return {
+      title: 'Sanat Eseri Karşılaştırma Sonuç Analizi',
+      bulletPoints,
+      recommendation
+    };
+  } else {
+    const prices = validItems.map(i => Number(i.price) || 0);
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    const cheapest = validItems.find(i => (Number(i.price) || 0) === minPrice);
+    const premium = validItems.find(i => (Number(i.price) || 0) === maxPrice);
+
+    const spots = validItems.map(i => (i.capacity - i.enrolled) || 0);
+    const maxSpots = Math.max(...spots);
+    const mostAvailable = validItems.find(i => ((i.capacity - i.enrolled) || 0) === maxSpots);
+
+    const dates = validItems.map(i => new Date(i.date).getTime()).filter(t => !isNaN(t));
+    let soonest = null;
+    if (dates.length > 0) {
+      const minDate = Math.min(...dates);
+      soonest = validItems.find(i => new Date(i.date).getTime() === minDate);
+    }
+
+    let bulletPoints = [];
+    bulletPoints.push(`💵 **En Uygun Fiyat:** "${cheapest.title}" (${minPrice.toLocaleString('tr-TR')} ₺) ile en ekonomik atölye eğitimidir.`);
+    if (mostAvailable) {
+      const avail = mostAvailable.capacity - mostAvailable.enrolled;
+      bulletPoints.push(`👥 **En Müsait Kontenjan:** "${mostAvailable.title}" (${avail} boş yer) grup katılımı için en uygun seçenektir.`);
+    }
+    if (soonest) {
+      const dateStr = new Date(soonest.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+      bulletPoints.push(`📅 **İlk Başlayacak Etkinlik:** "${soonest.title}" (${dateStr}) takvimde en yakın tarihli atölyedir.`);
+    }
+
+    let recommendation = `**Tavsiye:** Hemen başlayıp bütçenizi yormayacak bir eğitim istiyorsanız **${cheapest.title}** sizin için idealdir. ${mostAvailable && mostAvailable.id !== cheapest.id ? `Arkadaşlarınızla birlikte katılım planlıyorsanız geniş kontenjana sahip **${mostAvailable.title}** tercih edilebilir.` : ''}`;
+
+    return {
+      title: 'Atölye & Etkinlik Karşılaştırma Sonuç Analizi',
+      bulletPoints,
+      recommendation
+    };
+  }
+};
+
 // ─── Sipariş Durumu Konfigürasyonu ───────────────
 const ORDER_STEPS = [
   { key: 'pending', label: 'Sipariş Alındı', icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500' },
@@ -53,6 +142,24 @@ const ProfilePage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  // Toast Notification State
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+  };
+
+  // Kupon Kopyalama Geri Bildirimi
+  const [copiedCoupon, setCopiedCoupon] = useState(null);
+
+  useEffect(() => {
+    if (toast.show) {
+      const timer = setTimeout(() => {
+        setToast(p => ({ ...p, show: false }));
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.show]);
 
   const navigate = useNavigate();
 
@@ -118,7 +225,7 @@ const ProfilePage = () => {
 
   const handleCancelRequest = async () => {
     if (!cancelModal?.reason?.trim() || cancelModal.reason.trim().length < 5) {
-      alert('Lütfen en az 5 karakterlik bir iptal sebebi girin.');
+      showToast('Lütfen en az 5 karakterlik bir iptal sebebi girin.', 'error');
       return;
     }
     setCancelSubmitting(true);
@@ -132,11 +239,12 @@ const ProfilePage = () => {
       if (data.success) {
         setCancelModal(null);
         fetchOrders();
+        showToast('İptal talebi başarıyla oluşturuldu.', 'success');
       } else {
-        alert(data.message || 'Bir hata oluştu.');
+        showToast(data.message || 'Bir hata oluştu.', 'error');
       }
     } catch {
-      alert('Sunucuya bağlanılamadı.');
+      showToast('Sunucuya bağlanılamadı.', 'error');
     } finally {
       setCancelSubmitting(false);
     }
@@ -193,23 +301,23 @@ const ProfilePage = () => {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Rezervasyonunuz başarıyla iptal edildi.');
+        showToast('Rezervasyonunuz başarıyla iptal edildi.', 'success');
         fetchReservations();
       } else {
-        alert(data.message || 'İptal işlemi başarısız.');
+        showToast(data.message || 'İptal işlemi başarısız.', 'error');
       }
     } catch {
-      alert('Sunucu hatası oluştu.');
+      showToast('Sunucu hatası oluştu.', 'error');
     }
   };
 
   const handleUpdateReservation = async (id) => {
     if (!editDate) {
-      alert('Lütfen geçerli bir tarih seçin.');
+      showToast('Lütfen geçerli bir tarih seçin.', 'error');
       return;
     }
     if (parseInt(editParticipants) < 1) {
-      alert('Katılımcı sayısı en az 1 olmalıdır.');
+      showToast('Katılımcı sayısı en az 1 olmalıdır.', 'error');
       return;
     }
     const token = localStorage.getItem('token');
@@ -227,14 +335,14 @@ const ProfilePage = () => {
       });
       const data = await res.json();
       if (data.success) {
-        alert('Rezervasyon başarıyla güncellendi.');
+        showToast('Rezervasyon başarıyla güncellendi.', 'success');
         setEditingReservationId(null);
         fetchReservations();
       } else {
-        alert(data.message || 'Güncelleme işlemi başarısız.');
+        showToast(data.message || 'Güncelleme işlemi başarısız.', 'error');
       }
     } catch {
-      alert('Sunucu hatası oluştu.');
+      showToast('Sunucu hatası oluştu.', 'error');
     }
   };
 
@@ -945,11 +1053,16 @@ const ProfilePage = () => {
                             <button
                               onClick={() => {
                                 navigator.clipboard.writeText('HOSGELDIN');
-                                alert('Kupon kodu kopyalandı: HOSGELDIN');
+                                setCopiedCoupon('HOSGELDIN');
+                                setTimeout(() => setCopiedCoupon(null), 2000);
                               }}
-                              className="text-xs bg-purple-500 hover:bg-purple-600 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-300 ${
+                                copiedCoupon === 'HOSGELDIN'
+                                  ? 'bg-emerald-500 text-white scale-105'
+                                  : 'bg-purple-500 hover:bg-purple-600 text-white'
+                              }`}
                             >
-                              Kopyala
+                              {copiedCoupon === 'HOSGELDIN' ? '✓ Kopyalandı!' : 'Kopyala'}
                             </button>
                           ) : (
                             <span className="text-xs text-muted font-medium py-1.5">Geçersiz</span>
@@ -989,11 +1102,16 @@ const ProfilePage = () => {
                             <button
                               onClick={() => {
                                 navigator.clipboard.writeText('ARTISANA20');
-                                alert('Kupon kodu kopyalandı: ARTISANA20');
+                                setCopiedCoupon('ARTISANA20');
+                                setTimeout(() => setCopiedCoupon(null), 2000);
                               }}
-                              className="text-xs bg-amber-500 hover:bg-amber-600 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors"
+                              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-300 ${
+                                copiedCoupon === 'ARTISANA20'
+                                  ? 'bg-emerald-500 text-white scale-105'
+                                  : 'bg-amber-500 hover:bg-amber-600 text-white'
+                              }`}
                             >
-                              Kopyala
+                              {copiedCoupon === 'ARTISANA20' ? '✓ Kopyalandı!' : 'Kopyala'}
                             </button>
                           ) : (
                             <span className="text-xs text-muted font-medium py-1.5">🔒 Kilitli</span>
@@ -1037,7 +1155,7 @@ const ProfilePage = () => {
                 const handleLoadSave = (saved) => {
                   localStorage.setItem('artisana_compare', JSON.stringify(saved.items));
                   window.dispatchEvent(new Event('artisana-compare-updated'));
-                  alert(`"${saved.title}" karşılaştırması aktif edildi! Sayfanın altındaki karşılaştırma çubuğundan görebilirsiniz.`);
+                  window.dispatchEvent(new Event('artisana-compare-open'));
                 };
 
                 return (
@@ -1052,37 +1170,60 @@ const ProfilePage = () => {
                     ) : (
                       <div className="space-y-4 pt-2">
                         {savedList.map(saved => (
-                          <div key={saved.id} className="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-white/10 transition-colors">
-                            <div>
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${saved.type === 'artwork' ? 'bg-primary/20 text-primary-light' : 'bg-amber-500/20 text-amber-400'}`}>
-                                  {saved.type === 'artwork' ? 'Eser Karşılaştırması' : 'Atölye Karşılaştırması'}
-                                </span>
-                                <span className="text-[10px] text-muted/60">
-                                  {new Date(saved.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                          <div key={saved.id} className="bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 transition-colors space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div>
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${saved.type === 'artwork' ? 'bg-primary/20 text-primary-light' : 'bg-amber-500/20 text-amber-400'}`}>
+                                    {saved.type === 'artwork' ? 'Eser Karşılaştırması' : 'Atölye Karşılaştırması'}
+                                  </span>
+                                  <span className="text-[10px] text-muted/60">
+                                    {new Date(saved.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                </div>
+                                <h4 className="font-bold text-foreground text-base leading-tight">{saved.title}</h4>
+                                <p className="text-xs text-foreground/60 mt-1">
+                                  {saved.type === 'artwork' ? 'Karşılaştırılan Eserler' : 'Karşılaştırılan Atölyeler'}: {saved.items.map(i => `"${i.title}"`).join(', ')}
+                                </p>
                               </div>
-                              <h4 className="font-bold text-foreground text-base leading-tight">{saved.title}</h4>
-                              <p className="text-xs text-foreground/60 mt-1">
-                                Karşılaştırılan Eserler: {saved.items.map(i => `"${i.title}"`).join(', ')}
-                              </p>
+
+                              <div className="flex items-center gap-2.5 shrink-0">
+                                <button
+                                  onClick={() => handleLoadSave(saved)}
+                                  className="text-xs bg-primary hover:bg-primary-dark text-white font-semibold px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
+                                >
+                                  Görüntüle
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSave(saved.id)}
+                                  className="text-xs bg-error/10 hover:bg-error text-error font-semibold p-2 rounded-lg transition-colors"
+                                  title="Sil"
+                                >
+                                  Sil
+                                </button>
+                              </div>
                             </div>
 
-                            <div className="flex items-center gap-2.5 shrink-0">
-                              <button
-                                onClick={() => handleLoadSave(saved)}
-                                className="text-xs bg-primary hover:bg-primary-dark text-white font-semibold px-3 py-2 rounded-lg transition-colors flex items-center gap-1"
-                              >
-                                Görüntüle
-                              </button>
-                              <button
-                                onClick={() => handleDeleteSave(saved.id)}
-                                className="text-xs bg-error/10 hover:bg-error text-error font-semibold p-2 rounded-lg transition-colors"
-                                title="Sil"
-                              >
-                                Sil
-                              </button>
-                            </div>
+                            {/* Saved Analysis Report */}
+                            {(() => {
+                              const analysis = saved.analysis || analyzeComparisons(saved.items, saved.type);
+                              if (!analysis) return null;
+                              return (
+                                <div className="pt-4 border-t border-white/10 space-y-3">
+                                  <div className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                                    <span>📊</span> {analysis.title || 'Karşılaştırma Sonuç Analizi'}
+                                  </div>
+                                  <ul className="space-y-1.5 text-xs text-foreground/80 pl-4 list-disc">
+                                    {analysis.bulletPoints.map((bp, i) => (
+                                      <li key={i} dangerouslySetInnerHTML={{ __html: bp.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                    ))}
+                                  </ul>
+                                  <div className="bg-white/5 p-3 rounded-lg text-xs italic text-foreground/90 border border-white/5">
+                                    <span dangerouslySetInnerHTML={{ __html: analysis.recommendation.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         ))}
                       </div>
@@ -1123,6 +1264,42 @@ const ProfilePage = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* Şekilli Şukullu Toast Bildirimi */}
+      {toast.show && (
+        <div 
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3.5 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-0 opacity-100 ${
+            toast.type === 'success' 
+              ? 'bg-emerald-500/15 border-emerald-500/25 text-emerald-400' 
+              : 'bg-red-500/15 border-red-500/25 text-red-400'
+          }`}
+          style={{
+            animation: 'slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+          }}
+        >
+          <span className="text-base">
+            {toast.type === 'success' ? '🎉' : '⚠️'}
+          </span>
+          <div className="text-xs font-semibold tracking-wide font-sans">{toast.message}</div>
+          <button 
+            onClick={() => setToast(p => ({ ...p, show: false }))} 
+            className="text-muted/60 hover:text-foreground transition-colors ml-2 text-sm font-bold"
+          >
+            ×
+          </button>
+          <style>{`
+            @keyframes slideInUp {
+              from {
+                transform: translateY(1rem);
+                opacity: 0;
+              }
+              to {
+                transform: translateY(0);
+                opacity: 1;
+              }
+            }
+          `}</style>
         </div>
       )}
     </>

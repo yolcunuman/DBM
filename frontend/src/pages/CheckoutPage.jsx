@@ -18,6 +18,7 @@ const CheckoutPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [appliedCheckoutCoupon, setAppliedCheckoutCoupon] = useState(null);
   const [couponCode, setCouponCode] = useState('');
   const [couponError, setCouponError] = useState('');
 
@@ -31,8 +32,10 @@ const CheckoutPage = () => {
     }
     const found = VALID_COUPONS[code];
     if (found) {
-      setAppliedCoupon({ code, ...found });
-      localStorage.setItem('artisana_coupon', JSON.stringify({ code, ...found }));
+      const couponObj = { code, ...found };
+      setAppliedCheckoutCoupon(couponObj);
+      localStorage.setItem('artisana_checkout_coupon', JSON.stringify(couponObj));
+      window.dispatchEvent(new Event('artisana_cart_updated'));
       setCouponCode('');
     } else {
       setCouponError('Geçersiz kupon kodu.');
@@ -40,8 +43,9 @@ const CheckoutPage = () => {
   };
 
   const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    localStorage.removeItem('artisana_coupon');
+    setAppliedCheckoutCoupon(null);
+    localStorage.removeItem('artisana_checkout_coupon');
+    window.dispatchEvent(new Event('artisana_cart_updated'));
     setCouponCode('');
   };
 
@@ -58,11 +62,26 @@ const CheckoutPage = () => {
   const user = userStr ? JSON.parse(userStr) : null;
 
   useEffect(() => {
-    const stored = localStorage.getItem('artisana_cart');
-    if (stored) try { setCart(JSON.parse(stored)); } catch {}
-    const coupon = localStorage.getItem('artisana_coupon');
-    if (coupon) try { setAppliedCoupon(JSON.parse(coupon)); } catch {}
+    const loadData = () => {
+      const stored = localStorage.getItem('artisana_cart');
+      if (stored) try { setCart(JSON.parse(stored)); } catch {}
+      const promo = localStorage.getItem('artisana_coupon');
+      if (promo) {
+        try { setAppliedCoupon(JSON.parse(promo)); } catch {}
+      } else {
+        setAppliedCoupon(null);
+      }
+      const checkout = localStorage.getItem('artisana_checkout_coupon');
+      if (checkout) {
+        try { setAppliedCheckoutCoupon(JSON.parse(checkout)); } catch {}
+      } else {
+        setAppliedCheckoutCoupon(null);
+      }
+    };
+    loadData();
+    window.addEventListener('artisana_cart_updated', loadData);
     if (!userStr) navigate('/login');
+    return () => window.removeEventListener('artisana_cart_updated', loadData);
   }, []);
 
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
@@ -70,7 +89,10 @@ const CheckoutPage = () => {
   const subTotal = cart.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0);
   const shippingCost = form.shippingMethod === 'hizli' ? 150 : (subTotal >= 5000 ? 0 : 150);
   const freeShipping = form.shippingMethod !== 'hizli' && subTotal >= 5000;
-  const discount = appliedCoupon ? (subTotal * appliedCoupon.discount) / 100 : 0;
+  const promoDiscount = appliedCoupon ? (subTotal * appliedCoupon.discount) / 100 : 0;
+  const subTotalAfterPromo = subTotal - promoDiscount;
+  const checkoutDiscount = appliedCheckoutCoupon ? (subTotalAfterPromo * appliedCheckoutCoupon.discount) / 100 : 0;
+  const discount = promoDiscount + checkoutDiscount;
   const total = subTotal - discount + (freeShipping ? 0 : shippingCost);
 
   // ─── Validasyon Fonksiyonları ──────────────────
@@ -147,7 +169,10 @@ const CheckoutPage = () => {
             payment_method: form.paymentMethod,
             shipping_address: `${form.fullName} - ${form.phone} | ${form.address}, ${form.district}/${form.city}`,
             notes: `Kargo: ${form.shippingMethod === 'hizli' ? 'Hızlı' : 'Standart'}`,
-            coupon_code: appliedCoupon ? appliedCoupon.code : null
+            coupon_code: [
+              appliedCoupon ? appliedCoupon.code : null,
+              appliedCheckoutCoupon ? appliedCheckoutCoupon.code : null
+            ].filter(Boolean).join('+') || null
           })
         });
         const data = await response.json();
@@ -157,6 +182,7 @@ const CheckoutPage = () => {
       }
       localStorage.removeItem('artisana_cart');
       localStorage.removeItem('artisana_coupon');
+      localStorage.removeItem('artisana_checkout_coupon');
       window.dispatchEvent(new Event('artisana_cart_updated'));
       setOrderSuccess(true);
       setTimeout(() => navigate('/profile?tab=orders'), 4000);
@@ -462,10 +488,10 @@ const CheckoutPage = () => {
                       setCouponError('');
                     }}
                     placeholder="Örn: YAZ10"
-                    disabled={!!appliedCoupon}
+                    disabled={!!appliedCheckoutCoupon}
                     className="flex-1 px-3 py-2 border border-border rounded-lg bg-background text-sm focus:outline-none focus:border-primary disabled:opacity-50"
                   />
-                  {appliedCoupon ? (
+                  {appliedCheckoutCoupon ? (
                     <button
                       type="button"
                       onClick={handleRemoveCoupon}
@@ -483,9 +509,9 @@ const CheckoutPage = () => {
                   )}
                 </div>
                 {couponError && <p className="text-xs text-red-500">{couponError}</p>}
-                {appliedCoupon && (
+                {appliedCheckoutCoupon && (
                   <p className="text-xs text-success flex items-center gap-1">
-                    🎉 <strong>{appliedCoupon.code}</strong> uygulandı: {appliedCoupon.label}
+                    🎉 <strong>{appliedCheckoutCoupon.code}</strong> uygulandı: {appliedCheckoutCoupon.label}
                   </p>
                 )}
               </form>
@@ -501,10 +527,16 @@ const CheckoutPage = () => {
                   {freeShipping ? 'Ücretsiz' : `${shippingCost.toLocaleString('tr-TR')} ₺`}
                 </span>
               </div>
-              {discount > 0 && (
+              {appliedCoupon && (
                 <div className="flex justify-between text-success">
-                  <span className="flex items-center gap-1"><Tag size={12} /> {appliedCoupon.code}</span>
-                  <span>−{discount.toLocaleString('tr-TR')} ₺</span>
+                  <span className="flex items-center gap-1"><Tag size={12} /> Promosyon Kodu ({appliedCoupon.code})</span>
+                  <span>−{promoDiscount.toLocaleString('tr-TR')} ₺</span>
+                </div>
+              )}
+              {appliedCheckoutCoupon && (
+                <div className="flex justify-between text-success">
+                  <span className="flex items-center gap-1"><Tag size={12} /> İndirim Kuponu ({appliedCheckoutCoupon.code})</span>
+                  <span>−{checkoutDiscount.toLocaleString('tr-TR')} ₺</span>
                 </div>
               )}
             </div>

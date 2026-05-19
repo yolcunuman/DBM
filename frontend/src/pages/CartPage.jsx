@@ -16,16 +16,35 @@ const CartPage = () => {
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState('');
 
-  // Load cart from localStorage
+  // Load cart and coupon from localStorage
   useEffect(() => {
     const stored = localStorage.getItem('artisana_cart');
     if (stored) {
       try { setCart(JSON.parse(stored)); } catch {}
     }
+    const coupon = localStorage.getItem('artisana_coupon');
+    if (coupon) {
+      try {
+        const parsed = JSON.parse(coupon);
+        setAppliedCoupon(parsed);
+        setCouponSuccess(`"${parsed.code}" kodu uygulandı! ${parsed.label} kazandınız.`);
+      } catch {}
+    }
     // Listen for cart updates from other pages
     const onStorage = () => {
       const s = localStorage.getItem('artisana_cart');
       if (s) try { setCart(JSON.parse(s)); } catch {}
+      const c = localStorage.getItem('artisana_coupon');
+      if (c) {
+        try {
+          const parsed = JSON.parse(c);
+          setAppliedCoupon(parsed);
+          setCouponSuccess(`"${parsed.code}" kodu uygulandı! ${parsed.label} kazandınız.`);
+        } catch {}
+      } else {
+        setAppliedCoupon(null);
+        setCouponSuccess('');
+      }
     };
     window.addEventListener('artisana_cart_updated', onStorage);
     return () => window.removeEventListener('artisana_cart_updated', onStorage);
@@ -57,7 +76,10 @@ const CartPage = () => {
     if (!code) { setCouponError('Lütfen bir kupon kodu girin.'); return; }
     const found = VALID_COUPONS[code];
     if (found) {
-      setAppliedCoupon({ code, ...found });
+      const couponObj = { code, ...found };
+      setAppliedCoupon(couponObj);
+      localStorage.setItem('artisana_coupon', JSON.stringify(couponObj));
+      window.dispatchEvent(new Event('artisana_cart_updated'));
       setCouponSuccess(`"${code}" kodu uygulandı! ${found.label} kazandınız.`);
       setCouponCode('');
     } else {
@@ -67,6 +89,8 @@ const CartPage = () => {
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
+    localStorage.removeItem('artisana_coupon');
+    window.dispatchEvent(new Event('artisana_cart_updated'));
     setCouponSuccess('');
     setCouponCode('');
   };
