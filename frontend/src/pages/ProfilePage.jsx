@@ -309,6 +309,27 @@ const ProfilePage = () => {
       showToast('Katılımcı sayısı en az 1 olmalıdır.', 'error');
       return;
     }
+
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    if (editDate < todayStr) {
+      showToast('Rezervasyon tarihi geçmiş bir tarih olamaz.', 'error');
+      return;
+    }
+
+    const currentRes = reservations.find(r => r.id === id);
+    if (currentRes && currentRes.reservation_date) {
+      const originalDateStr = currentRes.reservation_date.substring(0, 10);
+      if (editDate < originalDateStr) {
+        showToast('Rezervasyon tarihi, mevcut rezervasyon tarihinden daha geriye alınamaz.', 'error');
+        return;
+      }
+    }
+
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_URL}/reservations/${id}`, {
@@ -877,6 +898,18 @@ const ProfilePage = () => {
                                         type="date"
                                         value={editDate}
                                         onChange={(e) => setEditDate(e.target.value)}
+                                        min={(() => {
+                                          const today = new Date();
+                                          const yyyy = today.getFullYear();
+                                          const mm = String(today.getMonth() + 1).padStart(2, '0');
+                                          const dd = String(today.getDate()).padStart(2, '0');
+                                          const todayStr = `${yyyy}-${mm}-${dd}`;
+                                          
+                                          const currentRes = reservations.find(r => r.id === editingReservationId);
+                                          const originalDateStr = currentRes?.reservation_date?.substring(0, 10) || todayStr;
+                                          
+                                          return originalDateStr > todayStr ? originalDateStr : todayStr;
+                                        })()}
                                         className="w-full bg-background border border-white/10 rounded-lg px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
                                       />
                                     </div>

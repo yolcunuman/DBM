@@ -139,6 +139,21 @@ const WorkshopsPage = () => {
       setReservationStatus('error: Rezervasyon yapmak için giriş yapmalısınız.');
       return;
     }
+    if (selectedWorkshop?.title?.includes('Seçilebilir')) {
+      if (!customDate) {
+        setReservationStatus('error: Lütfen tercih ettiğiniz tarihi seçin.');
+        return;
+      }
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const todayStr = `${yyyy}-${mm}-${dd}`;
+      if (customDate < todayStr) {
+        setReservationStatus('error: Tercih edilen tarih geçmiş bir tarih olamaz.');
+        return;
+      }
+    }
 
     if (!agreeTerms) {
       setReservationStatus('error: Lütfen Mesafeli Satış ve Rezervasyon Sözleşmesi\'ni onaylayın.');
