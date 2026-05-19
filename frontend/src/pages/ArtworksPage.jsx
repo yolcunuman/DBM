@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Heart, Search, Eye, ShoppingCart, Palette, X, CheckCircle, Scale } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
+import { useToast } from '../hooks/useToast';
 
 const API_URL = 'http://localhost:5001/api';
 
@@ -18,6 +19,7 @@ const ArtworksPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || searchParams.get('artist') || '';
+  const { showToast, ToastUI } = useToast();
   
   const [artworks, setArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -154,20 +156,20 @@ const ArtworksPage = () => {
       const stored = localStorage.getItem('artisana_compare');
       let compareList = stored ? JSON.parse(stored) : [];
       if (compareList.length > 0 && compareList[0].type !== 'artwork') {
-        if (!window.confirm('Karşılaştırma listesinde sadece aynı türden ögeler bulunabilir. Yeni ögeyi eklemek için liste temizlenecek. Devam etmek istiyor musunuz?')) return;
         compareList = [];
       }
       if (compareList.some(i => i.id === item.id)) {
-        alert('Bu eser zaten karşılaştırma listesinde.');
+        showToast('Bu eser zaten karşılaştırma listesinde.', 'info');
         return;
       }
       if (compareList.length >= 3) {
-        alert('En fazla 3 eseri karşılaştırabilirsiniz.');
+        showToast('En fazla 3 eseri karşılaştırabilirsiniz.', 'error');
         return;
       }
       compareList.push({ ...item, type: 'artwork' });
       localStorage.setItem('artisana_compare', JSON.stringify(compareList));
       window.dispatchEvent(new Event('artisana-compare-updated'));
+      showToast('Eser karşılaştırma listesine eklendi!', 'success');
     } catch (err) { console.error(err); }
   };
 
@@ -463,6 +465,7 @@ const ArtworksPage = () => {
           </div>
         </div>
       )}
+      {ToastUI}
     </div>
   );
 };

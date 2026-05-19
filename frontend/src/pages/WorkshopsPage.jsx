@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, Users, X, Search, Tag, Scale } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
+import { useToast } from '../hooks/useToast';
 
 const API_URL = 'http://localhost:5001/api';
 
@@ -22,11 +23,12 @@ const WorkshopsPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedWorkshop, setSelectedWorkshop] = useState(null);
-  const [activeTab, setActiveTab] = useState('info'); // 'info' | 'reserve' | 'comments'
+  const [activeTab, setActiveTab] = useState('info');
   const [numParticipants, setNumParticipants] = useState(1);
   const [reservationStatus, setReservationStatus] = useState('');
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const { showToast, ToastUI } = useToast();
   
   // Coupon States
   const [couponCode, setCouponCode] = useState('');
@@ -65,20 +67,20 @@ const WorkshopsPage = () => {
       const stored = localStorage.getItem('artisana_compare');
       let compareList = stored ? JSON.parse(stored) : [];
       if (compareList.length > 0 && compareList[0].type !== 'workshop') {
-        if (!window.confirm('Karşılaştırma listesinde sadece aynı türden ögeler bulunabilir. Yeni ögeyi eklemek için liste temizlenecek. Devam etmek istiyor musunuz?')) return;
         compareList = [];
       }
       if (compareList.some(i => i.id === item.id)) {
-        alert('Bu atölye zaten karşılaştırma listesinde.');
+        showToast('Bu atölye zaten karşılaştırma listesinde.', 'info');
         return;
       }
       if (compareList.length >= 3) {
-        alert('En fazla 3 atölyeyi karşılaştırabilirsiniz.');
+        showToast('En fazla 3 atölyeyi karşılaştırabilirsiniz.', 'error');
         return;
       }
       compareList.push({ ...item, type: 'workshop' });
       localStorage.setItem('artisana_compare', JSON.stringify(compareList));
       window.dispatchEvent(new Event('artisana-compare-updated'));
+      showToast('Atölye karşılaştırma listesine eklendi!', 'success');
     } catch (err) { console.error(err); }
   };
 
@@ -622,6 +624,7 @@ const WorkshopsPage = () => {
           </div>
         </div>
       )}
+      {ToastUI}
     </div>
   );
 };

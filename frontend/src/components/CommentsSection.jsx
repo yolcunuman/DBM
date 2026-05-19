@@ -90,7 +90,7 @@ const CommentsSection = ({ targetType, targetId }) => {
   };
 
   const handleHelpful = (commentId) => {
-    if (!token) return alert('Oy vermek için giriş yapmalısınız.');
+    if (!token) return;
     
     const hasVoted = votedComments.includes(commentId);
     const action = hasVoted ? 'decrement' : 'increment';

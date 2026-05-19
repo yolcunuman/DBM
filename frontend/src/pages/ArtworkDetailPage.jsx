@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, ShoppingBag, Scale } from 'lucide-react';
 import CommentsSection from '../components/CommentsSection';
+import { useToast } from '../hooks/useToast';
 
 const ArtworkDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast, ToastUI } = useToast();
   const [artwork, setArtwork] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -119,20 +121,20 @@ const ArtworkDetailPage = () => {
                   const stored = localStorage.getItem('artisana_compare');
                   let compareList = stored ? JSON.parse(stored) : [];
                   if (compareList.length > 0 && compareList[0].type !== 'artwork') {
-                    if (!window.confirm('Karşılaştırma listesinde sadece aynı türden ögeler bulunabilir. Yeni ögeyi eklemek için liste temizlenecek. Devam etmek istiyor musunuz?')) return;
                     compareList = [];
                   }
                   if (compareList.some(i => i.id === item.id)) {
-                    alert('Bu eser zaten karşılaştırma listesinde.');
+                    showToast('Bu eser zaten karşılaştırma listesinde.', 'info');
                     return;
                   }
                   if (compareList.length >= 3) {
-                    alert('En fazla 3 eseri karşılaştırabilirsiniz.');
+                    showToast('En fazla 3 eseri karşılaştırabilirsiniz.', 'error');
                     return;
                   }
                   compareList.push({ ...item, type: 'artwork' });
                   localStorage.setItem('artisana_compare', JSON.stringify(compareList));
                   window.dispatchEvent(new Event('artisana-compare-updated'));
+                  showToast('Eser karşılaştırma listesine eklendi!', 'success');
                 } catch (e) { console.error(e); }
               }}
               className="w-full py-3 border-2 border-dashed border-primary/50 text-primary rounded-xl flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors group"
@@ -146,6 +148,7 @@ const ArtworkDetailPage = () => {
 
       {/* Yorumlar Bölümü */}
       <CommentsSection targetType="artwork" targetId={id} />
+      {ToastUI}
     </div>
   );
 };

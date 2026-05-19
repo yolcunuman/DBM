@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, CreditCard, Truck, CheckCircle2, Package, Tag, ArrowLeft, Lock, ShieldCheck } from 'lucide-react';
+import { useToast } from '../hooks/useToast.jsx';
 
 const API_URL = 'http://localhost:5001/api';
 
@@ -13,6 +14,7 @@ const VALID_COUPONS = {
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const { showToast, ToastUI } = useToast();
   const [cart, setCart] = useState([]);
   const [activeStep, setActiveStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -154,7 +156,7 @@ const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!form.agreeTerms) { alert('Lütfen sözleşmeleri onaylaın.'); return; }
+    if (!form.agreeTerms) { showToast('Lütfen sözleşmeleri onaylayın.', 'error'); return; }
     if (!validatePayment()) { return; }
     setIsSubmitting(true);
     try {
@@ -187,7 +189,7 @@ const CheckoutPage = () => {
       setOrderSuccess(true);
       setTimeout(() => navigate('/profile?tab=orders'), 4000);
     } catch (error) { 
-      alert(error.message || 'Sipariş sırasında bir hata oluştu.'); 
+      showToast(error.message || 'Sipariş sırasında bir hata oluştu.', 'error');
     }
     finally { setIsSubmitting(false); }
   };
@@ -211,6 +213,7 @@ const CheckoutPage = () => {
   ];
 
   return (
+    <>
     <div className="max-w-6xl mx-auto animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
@@ -550,6 +553,8 @@ const CheckoutPage = () => {
 
       </div>
     </div>
+    {ToastUI}
+    </>
   );
 };
 
