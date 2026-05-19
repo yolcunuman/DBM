@@ -248,12 +248,12 @@ const ComparisonDrawer = () => {
       
       {/* Custom Toast Notification */}
       {notification && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-3 bg-stone-900/95 backdrop-blur-md border border-primary/40 px-6 py-4 rounded-2xl shadow-2xl max-w-sm md:max-w-md w-[90%] transition-all duration-300">
-          <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
-            <span className="text-primary text-base">✨</span>
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-3 bg-zinc-900 border border-amber-500/30 px-6 py-4 rounded-2xl shadow-2xl max-w-sm md:max-w-md w-[90%] transition-all duration-300">
+          <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-amber-500 text-sm">✨</span>
           </div>
           <div className="flex-1">
-            <p className="text-xs font-semibold text-foreground/95 leading-relaxed">
+            <p className="text-xs font-semibold text-white leading-relaxed">
               {notification.message}
             </p>
           </div>
