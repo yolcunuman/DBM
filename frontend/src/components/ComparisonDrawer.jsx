@@ -4,6 +4,14 @@ import { Scale, X, Trash2, Calendar, Users, MapPin } from 'lucide-react';
 const ComparisonDrawer = () => {
   const [items, setItems] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [notification, setNotification] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => {
+      setNotification(null);
+    }, 4000);
+  };
 
   const loadItems = () => {
     try {
@@ -36,10 +44,7 @@ const ComparisonDrawer = () => {
   const handleSaveComparison = () => {
     if (items.length === 0) return;
     
-    const title = prompt("Karşılaştırma için bir isim girin:", `${itemType === 'artwork' ? 'Eser' : 'Atölye'} Karşılaştırması - ${new Date().toLocaleDateString('tr-TR')}`);
-    if (title === null) return; // Cancelled
-    
-    const activeTitle = title.trim() || `${itemType === 'artwork' ? 'Eser' : 'Atölye'} Karşılaştırması`;
+    const activeTitle = `${itemType === 'artwork' ? 'Eser' : 'Atölye'} Karşılaştırması - ${new Date().toLocaleDateString('tr-TR')}`;
     
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : null;
@@ -60,11 +65,11 @@ const ComparisonDrawer = () => {
       savedComparisons.unshift(newSave);
       localStorage.setItem(`artisana_saved_comparisons_${userId}`, JSON.stringify(savedComparisons));
       
-      alert("Karşılaştırma sonuçları başarıyla kaydedildi! Profilinizdeki 'Karşılaştırmalarım' sekmesinden dilediğiniz zaman erişebilirsiniz.");
+      showToast("Karşılaştırma sonuçları başarıyla kaydedildi! Profilinizdeki 'Karşılaştırmalarım' sekmesinden dilediğiniz zaman erişebilirsiniz.");
       window.dispatchEvent(new Event('artisana-saved-comparisons-updated'));
     } catch (e) {
       console.error(e);
-      alert("Karşılaştırma kaydedilirken bir hata oluştu.");
+      showToast("Karşılaştırma kaydedilirken bir hata oluştu.", "error");
     }
   };
 
@@ -237,6 +242,20 @@ const ComparisonDrawer = () => {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Custom Toast Notification */}
+      {notification && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-3 bg-stone-900/95 backdrop-blur-md border border-primary/40 px-6 py-4 rounded-2xl shadow-2xl max-w-sm md:max-w-md w-[90%] transition-all duration-300">
+          <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+            <span className="text-primary text-base">✨</span>
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-foreground/95 leading-relaxed">
+              {notification.message}
+            </p>
           </div>
         </div>
       )}
