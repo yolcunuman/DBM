@@ -80,9 +80,25 @@ const HomePage = () => {
 
       {/* ═══ HERO SECTION ═══ */}
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-secondary via-secondary-dark to-primary-dark text-white">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-72 h-72 bg-primary rounded-full blur-[120px]"></div>
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent rounded-full blur-[150px]"></div>
+        {/* Hareketli Sanat Temalı Arka Plan Elementleri */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+          {/* Yavaşça Büyüyüp Küçülen Işık Hüzmeleri */}
+          <div className="absolute -top-10 -left-10 w-96 h-96 bg-primary/20 rounded-full blur-[130px] animate-pulse-slow"></div>
+          <div className="absolute -bottom-20 -right-20 w-[500px] h-[500px] bg-accent/15 rounded-full blur-[150px] animate-pulse-slow" style={{ animationDelay: '-4s' }}></div>
+          
+          {/* Yüzen Çizgisel Sanat İkonları */}
+          <div className="absolute right-[8%] top-[10%] text-primary-light/15 animate-float-slow">
+            <Palette size={190} strokeWidth={0.75} />
+          </div>
+          <div className="absolute left-[40%] bottom-[8%] text-accent/10 animate-float-reverse" style={{ animationDelay: '-2s' }}>
+            <Sparkles size={110} strokeWidth={0.75} />
+          </div>
+          <div className="absolute right-[30%] bottom-[-30px] text-white/5 animate-float-slow" style={{ animationDelay: '-6s' }}>
+            <Palette size={140} strokeWidth={0.5} style={{ transform: 'rotate(120deg)' }} />
+          </div>
+          <div className="absolute left-[10%] top-[15%] text-primary-light/10 animate-float-reverse" style={{ animationDelay: '-8s' }}>
+            <Star size={70} strokeWidth={1} />
+          </div>
         </div>
         <div className="relative z-10 px-8 py-20 md:px-16 md:py-28 max-w-4xl">
           <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-medium mb-6 border border-white/10">
