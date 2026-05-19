@@ -25,6 +25,7 @@ const AdminDashboard = () => {
   const [addStatus, setAddStatus] = useState('');
   const [newWorkshop, setNewWorkshop] = useState({
     title: '',
+    description: '',
     instructor: '',
     category: 'Resim',
     price: '',
@@ -215,6 +216,7 @@ const AdminDashboard = () => {
         },
         body: JSON.stringify({
           title: finalTitle,
+          description: newWorkshop.description || `${finalTitle} - ${newWorkshop.instructor} tarafından verilen ${newWorkshop.isFlexible ? 'Özel Ders' : newWorkshop.category} atölyesi.`,
           instructor: newWorkshop.instructor,
           category: newWorkshop.isFlexible ? 'Özel Ders' : newWorkshop.category,
           price: parseFloat(newWorkshop.price) || 0,
@@ -232,6 +234,7 @@ const AdminDashboard = () => {
         setAddStatus('success');
         setNewWorkshop({
           title: '',
+          description: '',
           instructor: '',
           category: 'Resim',
           price: '',
@@ -788,6 +791,15 @@ const AdminDashboard = () => {
                     <label className="block text-xs font-semibold text-muted mb-1">Konum / Salon</label>
                     <input type="text" value={newWorkshop.location} onChange={e => setNewWorkshop({...newWorkshop, location: e.target.value})}
                       placeholder="Örn: Atölye A veya Zoom" className="w-full px-3 py-2 border border-border rounded text-sm bg-background" required />
+                  </div>
+
+                  {/* Description */}
+                  <div className="md:col-span-2 lg:col-span-3">
+                    <label className="block text-xs font-semibold text-muted mb-1">Açıklama</label>
+                    <textarea value={newWorkshop.description} onChange={e => setNewWorkshop({...newWorkshop, description: e.target.value})}
+                      placeholder="Atölye hakkında kısa bir açıklama yazın (boş bırakılırsa otomatik oluşturulur)"
+                      rows={2}
+                      className="w-full px-3 py-2 border border-border rounded text-sm bg-background resize-none" />
                   </div>
 
                   {/* Image URL */}
