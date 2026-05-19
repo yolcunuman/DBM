@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, CreditCard, Truck, CheckCircle2, Package, Tag, ArrowLeft, Lock, ShieldCheck } from 'lucide-react';
-import { useToast } from '../hooks/useToast.jsx';
+import { useToast } from '../hooks/useToast';
 
 const API_URL = 'http://localhost:5001/api';
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Star, Package, CheckCircle2, Truck, Home, Clock, Palette } from 'lucide-react';
+import { useToast } from '../hooks/useToast';
 
 const API_URL = 'http://localhost:5001/api';
 
@@ -143,23 +144,11 @@ const ProfilePage = () => {
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
-  // Toast Notification State
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  const showToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-  };
+  // Custom Toast Notification System
+  const { showToast, ToastUI } = useToast();
 
   // Kupon Kopyalama Geri Bildirimi
   const [copiedCoupon, setCopiedCoupon] = useState(null);
-
-  useEffect(() => {
-    if (toast.show) {
-      const timer = setTimeout(() => {
-        setToast(p => ({ ...p, show: false }));
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast.show]);
 
   const navigate = useNavigate();
 
@@ -1156,6 +1145,7 @@ const ProfilePage = () => {
                   localStorage.setItem('artisana_compare', JSON.stringify(saved.items));
                   window.dispatchEvent(new Event('artisana-compare-updated'));
                   window.dispatchEvent(new Event('artisana-compare-open'));
+                  showToast(`"${saved.title}" aktif edildi! Sayfanın altındaki karşılaştırma çubuğundan görebilirsiniz.`, 'success');
                 };
 
                 return (
@@ -1267,41 +1257,7 @@ const ProfilePage = () => {
         </div>
       )}
       {/* Şekilli Şukullu Toast Bildirimi */}
-      {toast.show && (
-        <div 
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3.5 rounded-xl border shadow-xl backdrop-blur-md transition-all duration-300 transform translate-y-0 opacity-100 ${
-            toast.type === 'success' 
-              ? 'bg-emerald-500/15 border-emerald-500/25 text-emerald-400' 
-              : 'bg-red-500/15 border-red-500/25 text-red-400'
-          }`}
-          style={{
-            animation: 'slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
-          }}
-        >
-          <span className="text-base">
-            {toast.type === 'success' ? '🎉' : '⚠️'}
-          </span>
-          <div className="text-xs font-semibold tracking-wide font-sans">{toast.message}</div>
-          <button 
-            onClick={() => setToast(p => ({ ...p, show: false }))} 
-            className="text-muted/60 hover:text-foreground transition-colors ml-2 text-sm font-bold"
-          >
-            ×
-          </button>
-          <style>{`
-            @keyframes slideInUp {
-              from {
-                transform: translateY(1rem);
-                opacity: 0;
-              }
-              to {
-                transform: translateY(0);
-                opacity: 1;
-              }
-            }
-          `}</style>
-        </div>
-      )}
+      {ToastUI}
     </>
   );
 };
