@@ -198,7 +198,7 @@ const ContactPage = () => {
                   
                   <div className="flex items-center justify-between text-xs text-muted pt-4 mt-4 border-t border-border">
                     <span className="uppercase tracking-wider font-medium">Talep No: #{ticket.id} • {ticket.category}</span>
-                    <span className="font-medium">{new Date(ticket.created_at).toLocaleDateString('tr-TR')}</span>
+                    <span className="font-medium">{new Date(ticket.createdAt || ticket.created_at).toLocaleDateString('tr-TR')}</span>
                   </div>
                 </div>
               ))

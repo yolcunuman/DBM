@@ -59,12 +59,6 @@ const createOrder = async (req, res) => {
       status: 'pending'
     });
 
-    // Stok kilidi: sipariş oluşturulunca eser artık alınamaz (stok=1 için)
-    if (artwork.stock <= quantity) {
-      artwork.is_available = false;
-      artwork.stock = Math.max(0, artwork.stock - quantity);
-      await artwork.save();
-    }
 
     res.status(201).json({ success: true, message: 'Sipariş başarıyla oluşturuldu.', data: order });
   } catch (error) {
@@ -189,8 +183,9 @@ const approveCancelOrder = async (req, res) => {
     if (!order.cancel_requested) return res.status(400).json({ success: false, message: 'İptal talebi bulunamadı.' });
 
     if (approve) {
-      // İptal onaylandı: stok geri yükleniyor
-      if (order.artwork) {
+      // İptal onaylandı: Sadece daha önce onaylanmış siparişlerde stoku geri yüklüyoruz
+      const isApprovedState = (s) => ['confirmed', 'shipped', 'delivered'].includes(s);
+      if (isApprovedState(order.status) && order.artwork) {
         order.artwork.stock = (order.artwork.stock || 0) + order.quantity;
         order.artwork.is_available = true;
         await order.artwork.save();

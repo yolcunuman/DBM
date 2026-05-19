@@ -564,7 +564,7 @@ const AdminDashboard = () => {
                       </td>
                       <td className="px-4 py-3 font-bold">{Number(order.total_price).toLocaleString('tr-TR')} ₺</td>
                       <td className="px-4 py-3">{getStatusBadge(order.status)}</td>
-                      <td className="px-4 py-3 text-muted text-xs">{new Date(order.created_at).toLocaleDateString('tr-TR')}</td>
+                      <td className="px-4 py-3 text-muted text-xs">{new Date(order.createdAt || order.created_at).toLocaleDateString('tr-TR')}</td>
                       <td className="px-4 py-3">
                         <select
                           value={order.status}
@@ -963,7 +963,7 @@ const AdminDashboard = () => {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="font-bold text-secondary">#{ticket.id} - {ticket.subject}</h3>
-                      <p className="text-xs text-muted mt-1">{new Date(ticket.created_at).toLocaleString('tr-TR')}</p>
+                      <p className="text-xs text-muted mt-1">{new Date(ticket.createdAt || ticket.created_at).toLocaleString('tr-TR')}</p>
                     </div>
                     <span className="text-xs font-bold bg-warning/10 text-warning px-2 py-1 rounded-sm uppercase">{ticket.category}</span>
                   </div>
@@ -1016,7 +1016,7 @@ const AdminDashboard = () => {
                         <h3 className="font-bold text-secondary">Kullanıcı #{comment.user_id}</h3>
                         <span className="text-xs bg-secondary/10 text-secondary px-2 py-0.5 rounded uppercase font-medium">{comment.target_type === 'artwork' ? 'Eser' : 'Atölye'} #{comment.target_id}</span>
                       </div>
-                      <p className="text-xs text-muted mt-1">{new Date(comment.created_at).toLocaleString('tr-TR')} • Puan: {comment.rating}/5</p>
+                      <p className="text-xs text-muted mt-1">{new Date(comment.createdAt || comment.created_at).toLocaleString('tr-TR')} • Puan: {comment.rating}/5</p>
                     </div>
                   </div>
                   <div className="bg-muted-bg/40 p-4 rounded-md mb-4 border border-border">
