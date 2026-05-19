@@ -20,9 +20,13 @@ const CommentsSection = ({ targetType, targetId }) => {
   const user = userStr ? JSON.parse(userStr) : null;
 
   useEffect(() => {
-    const savedVotes = localStorage.getItem('votedComments');
-    if (savedVotes) setVotedComments(JSON.parse(savedVotes));
-  }, []);
+    if (user) {
+      const savedVotes = localStorage.getItem(`votedComments_${user.id}`);
+      if (savedVotes) setVotedComments(JSON.parse(savedVotes));
+    } else {
+      setVotedComments([]);
+    }
+  }, [user?.id]);
 
   const fetchComments = () => {
     setLoading(true);
@@ -90,7 +94,7 @@ const CommentsSection = ({ targetType, targetId }) => {
   };
 
   const handleHelpful = (commentId) => {
-    if (!token) return;
+    if (!token || !user) return;
     
     const hasVoted = votedComments.includes(commentId);
     const action = hasVoted ? 'decrement' : 'increment';
@@ -113,7 +117,7 @@ const CommentsSection = ({ targetType, targetId }) => {
             newVotes = [...votedComments, commentId];
           }
           setVotedComments(newVotes);
-          localStorage.setItem('votedComments', JSON.stringify(newVotes));
+          localStorage.setItem(`votedComments_${user.id}`, JSON.stringify(newVotes));
 
           setComments(comments.map(c => 
             c.id === commentId ? { ...c, helpful_count: data.data.helpful_count } : c
