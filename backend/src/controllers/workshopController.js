@@ -125,7 +125,7 @@ const SEED_WORKSHOPS = [
     capacity: 14,
     enrolled: 9,
     location: 'Artisana El Sanatları Atölyesi, Üsküdar - İstanbul',
-    image_url: 'https://images.unsplash.com/photo-1452860606245-08f5c4e85638?w=600',
+    image_url: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?w=600',
     status: 'active'
   },
   {
@@ -358,7 +358,7 @@ const createReservation = async (req, res) => {
         if (code === 'SANAT10' || code === 'YAZ10') discountPct = 10;
         else if (code === 'ARTISANA20') discountPct = 20;
         else if (code === 'HOSGELDIN') discountPct = 15;
-        
+
         if (discountPct > 0) {
           currentPrice -= (currentPrice * discountPct) / 100;
         }
@@ -397,7 +397,7 @@ const getReservations = async (req, res) => {
   try {
     const { user_id } = req.query;
     const where = {};
-    
+
     // Admin değilse sadece kendi rezervasyonlarını görebilir
     if (req.user.role !== 'ADMIN') {
       where.user_id = req.user.id;
