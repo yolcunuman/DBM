@@ -103,11 +103,27 @@ const getAdminDashboardStats = async (req, res) => {
     const deliveredOrders = await Order.count({ where: { status: 'delivered' } });
     const cancelledOrders = await Order.count({ where: { status: 'cancelled' } });
 
-    // Toplam satış geliri
+    // Toplam satış geliri (Eser Satış Geliri)
     const orders = await Order.findAll({ where: { status: ['confirmed', 'shipped', 'delivered'] } });
     const totalSalesRevenue = orders.reduce((sum, o) => sum + parseFloat(o.total_price), 0);
 
-    // 6. Favori İstatistikleri
+    // 6. Rezervasyon İstatistikleri & Geliri
+    const totalReservations = await Reservation.count();
+    const pendingReservations = await Reservation.count({ where: { status: 'pending' } });
+    const confirmedReservations = await Reservation.count({ where: { status: 'confirmed' } });
+    const cancelledReservations = await Reservation.count({ where: { status: 'cancelled' } });
+
+    const allReservations = await Reservation.findAll();
+    const totalReservationRevenue = allReservations
+      .filter(r => r.status === 'confirmed')
+      .reduce((sum, r) => sum + parseFloat(r.total_price), 0);
+
+    const totalReservationParticipants = allReservations.reduce((sum, r) => sum + parseInt(r.num_participants || 0), 0);
+    const confirmedReservationParticipants = allReservations
+      .filter(r => r.status === 'confirmed')
+      .reduce((sum, r) => sum + parseInt(r.num_participants || 0), 0);
+
+    // 7. Favori İstatistikleri
     const totalFavorites = await Favorite.count();
 
     res.json({
@@ -129,6 +145,13 @@ const getAdminDashboardStats = async (req, res) => {
           delivered_orders: deliveredOrders,
           cancelled_orders: cancelledOrders,
           total_sales_revenue: totalSalesRevenue,
+          total_reservation_revenue: totalReservationRevenue,
+          total_reservations: totalReservations,
+          pending_reservations: pendingReservations,
+          confirmed_reservations: confirmedReservations,
+          cancelled_reservations: cancelledReservations,
+          total_reservation_participants: totalReservationParticipants,
+          confirmed_reservation_participants: confirmedReservationParticipants,
           total_favorites: totalFavorites
         },
         workshops: workshopStats,

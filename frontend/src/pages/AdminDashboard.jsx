@@ -378,7 +378,7 @@ const AdminDashboard = () => {
       {activeTab === 'overview' && (
         <div className="space-y-6">
           {/* KPI Kartları - Satır 1: Eser & Satış */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <div className="bg-surface border border-border p-5 rounded-lg shadow-sm border-l-4 border-l-primary">
               <div className="flex items-center justify-between">
                 <div>
@@ -408,11 +408,23 @@ const AdminDashboard = () => {
             <div className="bg-surface border border-border p-5 rounded-lg shadow-sm border-l-4 border-l-accent">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-muted font-medium mb-1">Satış Geliri</p>
+                  <p className="text-xs text-muted font-medium mb-1">Eser Satış Geliri</p>
                   <h3 className="text-2xl font-bold text-secondary">{(kpi.total_sales_revenue || 0).toLocaleString('tr-TR')} ₺</h3>
                 </div>
                 <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center text-accent">
                   <BarChart3 size={20} />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface border border-border p-5 rounded-lg shadow-sm border-l-4 border-l-info">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted font-medium mb-1">Rezervasyon Geliri</p>
+                  <h3 className="text-2xl font-bold text-secondary">{(kpi.total_reservation_revenue || 0).toLocaleString('tr-TR')} ₺</h3>
+                </div>
+                <div className="w-10 h-10 bg-info/10 rounded-full flex items-center justify-center text-info">
+                  <Ticket size={20} />
                 </div>
               </div>
             </div>
@@ -481,28 +493,59 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Sipariş Durumu Özet Çubukları */}
-          <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
-            <h2 className="font-bold text-secondary mb-4">Sipariş Durumu Dağılımı</h2>
-            <div className="grid grid-cols-5 gap-3">
-              {[
-                { label: 'Bekliyor', count: kpi.pending_orders, color: 'bg-warning' },
-                { label: 'Onaylandı', count: kpi.confirmed_orders, color: 'bg-info' },
-                { label: 'Kargoda', count: kpi.shipped_orders, color: 'bg-primary' },
-                { label: 'Teslim', count: kpi.delivered_orders, color: 'bg-success' },
-                { label: 'İptal', count: kpi.cancelled_orders, color: 'bg-error' }
-              ].map(item => (
-                <div key={item.label} className="text-center">
-                  <div className="h-24 bg-muted-bg rounded-lg flex items-end justify-center p-2 mb-2">
-                    <div
-                      className={`w-full ${item.color} rounded-t-md transition-all`}
-                      style={{ height: `${kpi.total_orders > 0 ? Math.max(((item.count || 0) / kpi.total_orders) * 100, 5) : 5}%` }}
-                    ></div>
+          {/* Dağılım Grafikleri */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Sipariş Durumu Dağılımı */}
+            <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
+              <h2 className="font-bold text-secondary mb-4">Sipariş Durumu Dağılımı</h2>
+              <div className="grid grid-cols-5 gap-3">
+                {[
+                  { label: 'Bekliyor', count: kpi.pending_orders, color: 'bg-warning' },
+                  { label: 'Onaylandı', count: kpi.confirmed_orders, color: 'bg-info' },
+                  { label: 'Kargoda', count: kpi.shipped_orders, color: 'bg-primary' },
+                  { label: 'Teslim', count: kpi.delivered_orders, color: 'bg-success' },
+                  { label: 'İptal', count: kpi.cancelled_orders, color: 'bg-error' }
+                ].map(item => (
+                  <div key={item.label} className="text-center">
+                    <div className="h-24 bg-muted-bg rounded-lg flex items-end justify-center p-2 mb-2">
+                      <div
+                        className={`w-full ${item.color} rounded-t-md transition-all`}
+                        style={{ height: `${kpi.total_orders > 0 ? Math.max(((item.count || 0) / kpi.total_orders) * 100, 5) : 5}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-[10px] leading-tight text-muted min-h-[24px] flex items-center justify-center">{item.label}</p>
+                    <p className="text-lg font-bold text-secondary">{item.count || 0}</p>
                   </div>
-                  <p className="text-xs text-muted">{item.label}</p>
-                  <p className="text-lg font-bold text-secondary">{item.count || 0}</p>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+
+            {/* Rezervasyon Durumu Dağılımı */}
+            <div className="bg-surface border border-border rounded-lg p-6 shadow-sm">
+              <h2 className="font-bold text-secondary mb-4">Rezervasyon Durumu & Katılımcı Dağılımı</h2>
+              <div className="grid grid-cols-5 gap-3">
+                {[
+                  { label: 'Bekleyen Rez.', count: kpi.pending_reservations, color: 'bg-warning' },
+                  { label: 'Onaylanan Rez.', count: kpi.confirmed_reservations, color: 'bg-success' },
+                  { label: 'İptal Edilen Rez.', count: kpi.cancelled_reservations, color: 'bg-error' },
+                  { label: 'Toplam Katılımcı', count: kpi.total_reservation_participants, color: 'bg-primary' },
+                  { label: 'Onaylı Katılımcı', count: kpi.confirmed_reservation_participants, color: 'bg-info' }
+                ].map(item => {
+                  const maxCount = Math.max(kpi.total_reservations || 1, kpi.total_reservation_participants || 1);
+                  return (
+                    <div key={item.label} className="text-center">
+                      <div className="h-24 bg-muted-bg rounded-lg flex items-end justify-center p-2 mb-2">
+                        <div
+                          className={`w-full ${item.color} rounded-t-md transition-all`}
+                          style={{ height: `${maxCount > 0 ? Math.max(((item.count || 0) / maxCount) * 100, 5) : 5}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-[10px] leading-tight text-muted min-h-[24px] flex items-center justify-center">{item.label}</p>
+                      <p className="text-lg font-bold text-secondary">{item.count || 0}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
