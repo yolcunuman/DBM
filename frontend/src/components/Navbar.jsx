@@ -164,7 +164,10 @@ const Navbar = () => {
                         <span>Kullanıcı Bilgilerim</span>
                       </Link>
 
-                      <button className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 hover:bg-primary/5 hover:text-primary transition-colors">
+                      <button 
+                        onClick={() => window.dispatchEvent(new Event('open-artisana-assistant'))}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 hover:bg-primary/5 hover:text-primary transition-colors"
+                      >
                         <Headset size={18} className="text-foreground/60 group-hover/link:text-primary" />
                         <span>Artisana Asistan</span>
                       </button>

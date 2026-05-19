@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MessageCircle, X, Send, Bot, Ticket, Check } from 'lucide-react';
 
 const LiveChatWidget = () => {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { id: 1, text: "Merhaba! Artisana canlı desteğe hoş geldiniz. Size nasıl yardımcı olabilirim?", sender: 'bot', time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
@@ -13,6 +15,23 @@ const LiveChatWidget = () => {
 
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
+  const userId = user ? user.id : 'guest';
+
+  // Listen to external request to open assistant
+  useEffect(() => {
+    const handleOpenRequest = () => {
+      setIsOpen(true);
+    };
+    window.addEventListener('open-artisana-assistant', handleOpenRequest);
+    return () => window.removeEventListener('open-artisana-assistant', handleOpenRequest);
+  }, []);
+
+  // Reset messages when user logs in, logs out, or switches accounts
+  useEffect(() => {
+    setMessages([
+      { id: 1, text: "Merhaba! Artisana canlı desteğe hoş geldiniz. Size nasıl yardımcı olabilirim?", sender: 'bot', time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
+    ]);
+  }, [userId]);
 
   useEffect(() => {
     // Eserleri ve Atölyeleri çek
