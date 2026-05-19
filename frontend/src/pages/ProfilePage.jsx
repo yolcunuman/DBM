@@ -401,7 +401,7 @@ const ProfilePage = () => {
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        className="w-full px-4 py-3 bg-background/50 border border-white/10 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:border-primary transition-colors"
                         required
                       />
                     </div>
@@ -411,7 +411,7 @@ const ProfilePage = () => {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-4 py-3 bg-background/50 border border-white/10 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:border-primary transition-colors"
                         required
                       />
                     </div>
@@ -446,7 +446,7 @@ const ProfilePage = () => {
                         type="password"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full px-4 py-3 bg-background/50 border border-white/10 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:border-primary transition-colors"
                         required
                       />
                     </div>
@@ -456,7 +456,7 @@ const ProfilePage = () => {
                         type="password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-4 py-3 bg-background/50 border border-white/10 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:border-primary transition-colors"
                         required
                         minLength={6}
                       />
@@ -467,7 +467,7 @@ const ProfilePage = () => {
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-4 py-3 bg-background/50 border border-white/10 rounded-xl focus:outline-none focus:border-primary transition-colors"
+                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:border-primary transition-colors"
                         required
                         minLength={6}
                       />

@@ -119,18 +119,34 @@ const updateOrderStatus = async (req, res) => {
       const artwork = await Artwork.findByPk(order.artwork_id);
       if (artwork) {
         if (!wasApproved && isNowApproved) {
-          // Sipariş onaylandığında stoku düşürüyoruz ve tükenirse satışa kapatıyoruz.
-          if (!artwork.is_available || artwork.stock < order.quantity) {
+          // Bu eser için önceden onaylanmış başka bir sipariş var mı kontrol et
+          const { Op } = require('sequelize');
+          const approvedOrderExists = await Order.findOne({
+            where: {
+              artwork_id: order.artwork_id,
+              status: { [Op.in]: ['confirmed', 'shipped', 'delivered'] },
+              id: { [Op.ne]: order.id }
+            }
+          });
+
+          if (approvedOrderExists) {
             return res.status(400).json({ 
               success: false, 
-              message: 'Bu eser tükenmiş veya başka bir sipariş için onaylanmış.' 
+              message: 'Bu eser başka bir sipariş için onaylanmış.' 
             });
           }
-          artwork.stock -= order.quantity;
-          if (artwork.stock <= 0) {
+
+          // Eğer stok ve kullanılabilirlik eski hatalı kayıt yüzünden sıfırsa/false ise bile bu siparişi onaylayabiliriz.
+          if (artwork.stock >= order.quantity) {
+            artwork.stock -= order.quantity;
+            if (artwork.stock <= 0) {
+              artwork.is_available = false;
+            }
+            await artwork.save();
+          } else {
             artwork.is_available = false;
+            await artwork.save();
           }
-          await artwork.save();
         } else if (wasApproved && !isNowApproved) {
           // Daha önce onaylanmış sipariş iptal edildiğinde veya beklemeye alındığında stoku geri yüklüyoruz.
           artwork.stock += order.quantity;
