@@ -6,7 +6,7 @@ const LiveChatWidget = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 1, text: "Merhaba! Artisana canlı desteğe hoş geldiniz. Size nasıl yardımcı olabilirim?", sender: 'bot', time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
+    { id: 1, text: "Merhaba! Artisana canlı desteğe hoş geldiniz. Size nasıl yardımcı olabilirim?", sender: 'bot', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [artworks, setArtworks] = useState([]);
@@ -29,7 +29,7 @@ const LiveChatWidget = () => {
   // Reset messages when user logs in, logs out, or switches accounts
   useEffect(() => {
     setMessages([
-      { id: 1, text: "Merhaba! Artisana canlı desteğe hoş geldiniz. Size nasıl yardımcı olabilirim?", sender: 'bot', time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }
+      { id: 1, text: "Merhaba! Artisana canlı desteğe hoş geldiniz. Size nasıl yardımcı olabilirim?", sender: 'bot', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
     ]);
   }, [userId]);
 
@@ -61,18 +61,18 @@ const LiveChatWidget = () => {
   const handleSend = (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
-    
+
     const userText = inputValue;
     const newUserMsg = {
       id: Date.now(),
       text: userText,
       sender: 'user',
-      time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-    
+
     setMessages(prev => [...prev, newUserMsg]);
     setInputValue('');
-    
+
     // Botun vereceği cevabı analiz et
     setTimeout(() => {
       const response = getBotResponse(userText);
@@ -84,7 +84,7 @@ const LiveChatWidget = () => {
         actionLabel: response.actionLabel,
         actionType: response.actionType,
         originalMsg: response.originalMsg,
-        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }]);
     }, 1000);
   };
@@ -104,7 +104,7 @@ const LiveChatWidget = () => {
     }
 
     // 2. Eser satıldı mı / stok sorgusu
-    const matchedArtwork = artworks.find(art => 
+    const matchedArtwork = artworks.find(art =>
       lowerText.includes(art.title.toLowerCase())
     );
 
@@ -123,7 +123,7 @@ const LiveChatWidget = () => {
     }
 
     // 3. Atölye durum sorgusu
-    const matchedWorkshop = workshops.find(w => 
+    const matchedWorkshop = workshops.find(w =>
       lowerText.includes(w.title.toLowerCase())
     );
 
@@ -145,7 +145,7 @@ const LiveChatWidget = () => {
     // 4. Genel eser/tablo sorgusu ve fiyat sıralaması
     if (lowerText.includes('eser') || lowerText.includes('tablo') || lowerText.includes('resim') || lowerText.includes('heykel')) {
       const availableArt = artworks.filter(a => a.is_available);
-      
+
       if (availableArt.length > 0) {
         // En ucuz / En uygun sorgusu
         if (lowerText.includes('uygun') || lowerText.includes('ucuz') || lowerText.includes('düşük') || lowerText.includes('ekonomik')) {
@@ -156,7 +156,7 @@ const LiveChatWidget = () => {
             text: `Galerimizdeki en uygun fiyatlı (en ucuz) eserler şunlardır:\n\n${listStr}\n\nDetaylar için "Eserler" sayfamıza göz atabilirsiniz!`
           };
         }
-        
+
         // En pahalı / En yüksek fiyat sorgusu
         if (lowerText.includes('pahalı') || lowerText.includes('yüksek') || lowerText.includes('değerli')) {
           const sorted = [...availableArt].sort((x, y) => y.price - x.price).slice(0, 3);
@@ -180,7 +180,7 @@ const LiveChatWidget = () => {
     // 5. Genel atölye sorgusu ve fiyat sıralaması
     if (lowerText.includes('atölye') || lowerText.includes('kurs') || lowerText.includes('etkinlik')) {
       const activeWorkshops = workshops.filter(w => (w.capacity - w.enrolled) > 0);
-      
+
       if (activeWorkshops.length > 0) {
         // En ucuz / En uygun sorgusu
         if (lowerText.includes('uygun') || lowerText.includes('ucuz') || lowerText.includes('düşük') || lowerText.includes('ekonomik')) {
@@ -229,7 +229,7 @@ const LiveChatWidget = () => {
           id: Date.now(),
           text: "⚠️ Destek talebi oluşturabilmek için lütfen önce giriş yapın.",
           sender: 'bot',
-          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }]);
         return;
       }
@@ -245,32 +245,32 @@ const LiveChatWidget = () => {
           message: msg.originalMsg
         })
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setMessages(prev => [...prev, {
+              id: Date.now(),
+              text: `🎉 Destek talebiniz başarıyla oluşturuldu! (Talep ID: #${data.data.id})\n\nTalebinizin takibini İletişim sayfasından veya Hesabım panelinden yapabilirsiniz. En kısa sürede size dönüş sağlayacağız.`,
+              sender: 'bot',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }]);
+          } else {
+            setMessages(prev => [...prev, {
+              id: Date.now(),
+              text: "❌ Destek talebi oluşturulurken bir sorun oluştu. Lütfen İletişim sayfasındaki formu kullanın.",
+              sender: 'bot',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }]);
+          }
+        })
+        .catch(() => {
           setMessages(prev => [...prev, {
             id: Date.now(),
-            text: `🎉 Destek talebiniz başarıyla oluşturuldu! (Talep ID: #${data.data.id})\n\nTalebinizin takibini İletişim sayfasından veya Hesabım panelinden yapabilirsiniz. En kısa sürede size dönüş sağlayacağız.`,
+            text: "❌ Sunucu bağlantı hatası oluştu. Lütfen İletişim sayfasındaki formu kullanın.",
             sender: 'bot',
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }]);
-        } else {
-          setMessages(prev => [...prev, {
-            id: Date.now(),
-            text: "❌ Destek talebi oluşturulurken bir sorun oluştu. Lütfen İletişim sayfasındaki formu kullanın.",
-            sender: 'bot',
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-          }]);
-        }
-      })
-      .catch(() => {
-        setMessages(prev => [...prev, {
-          id: Date.now(),
-          text: "❌ Sunucu bağlantı hatası oluştu. Lütfen İletişim sayfasındaki formu kullanın.",
-          sender: 'bot',
-          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-        }]);
-      });
+        });
     }
   };
 
@@ -278,7 +278,7 @@ const LiveChatWidget = () => {
     <div className="fixed bottom-6 right-6 z-50 font-sans">
       {/* Chat Button */}
       {!isOpen && (
-        <button 
+        <button
           onClick={() => setIsOpen(true)}
           className="w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:bg-primary-dark hover:scale-105 transition-all animate-bounce"
         >
@@ -311,11 +311,10 @@ const LiveChatWidget = () => {
           <div className="flex-1 p-4 overflow-y-auto bg-zinc-50 dark:bg-zinc-950 space-y-4">
             {messages.map(msg => (
               <div key={msg.id} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
-                <div className={`max-w-[85%] p-3 text-sm shadow-sm whitespace-pre-wrap ${
-                  msg.sender === 'user' 
-                    ? 'bg-primary text-white rounded-2xl rounded-br-none' 
+                <div className={`max-w-[85%] p-3 text-sm shadow-sm whitespace-pre-wrap ${msg.sender === 'user'
+                    ? 'bg-primary text-white rounded-2xl rounded-br-none'
                     : 'bg-white dark:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-700/80 text-zinc-800 dark:text-zinc-100 rounded-2xl rounded-bl-none'
-                }`}>
+                  }`}>
                   {msg.text}
                   {msg.type === 'action' && !msg.completed && (
                     <button
@@ -339,11 +338,11 @@ const LiveChatWidget = () => {
 
           {/* Input Area */}
           <form onSubmit={handleSend} className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center gap-2">
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
-              placeholder="Bir mesaj yazın..." 
+              placeholder="Bir mesaj yazın..."
               className="flex-1 px-4 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-full focus:outline-none focus:border-primary bg-zinc-50 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500"
             />
             <button type="submit" className="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-dark transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed" disabled={!inputValue.trim()}>

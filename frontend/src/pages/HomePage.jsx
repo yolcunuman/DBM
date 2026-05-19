@@ -79,7 +79,7 @@ const HomePage = () => {
     <div className="space-y-16 animate-fade-in">
 
       {/* ═══ HERO SECTION ═══ */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] text-white">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-secondary via-secondary-dark to-primary-dark text-white">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-72 h-72 bg-primary rounded-full blur-[120px]"></div>
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-accent rounded-full blur-[150px]"></div>
