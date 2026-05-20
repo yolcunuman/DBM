@@ -9,21 +9,21 @@ const analyzeComparisons = (items, type) => {
   if (!items || items.length < 2) return null;
 
   const validItems = items.filter(Boolean);
-  
+
   if (type === 'artwork') {
     const prices = validItems.map(i => Number(i.price) || 0);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
     const cheapest = validItems.find(i => (Number(i.price) || 0) === minPrice);
     const premium = validItems.find(i => (Number(i.price) || 0) === maxPrice);
-    
+
     const years = validItems.map(i => parseInt(i.year) || 0).filter(y => y > 0);
     let newest = null;
     if (years.length > 0) {
       const maxYear = Math.max(...years);
       newest = validItems.find(i => (parseInt(i.year) || 0) === maxYear);
     }
-    
+
     const parseArea = (dimStr) => {
       if (!dimStr) return 0;
       const parts = dimStr.toLowerCase().match(/(\d+)\s*(x|\*)\s*(\d+)/);
@@ -102,6 +102,53 @@ const ORDER_STEPS = [
   { key: 'delivered', label: 'Teslim Edildi', icon: Home, color: 'text-success', bg: 'bg-success' },
 ];
 const STATUS_INDEX = { pending: 0, confirmed: 1, shipped: 2, delivered: 3 };
+
+const checkPasswordStrength = (pwd) => {
+  if (!pwd) return { score: 0, text: '', color: 'bg-transparent', width: 'w-0' };
+  
+  let score = 0;
+  if (pwd.length >= 8) score += 1;
+  if (/[A-Z]/.test(pwd)) score += 1;
+  if (/[a-z]/.test(pwd)) score += 1;
+  if (/[0-9]/.test(pwd)) score += 1;
+  if (/[@$!%*?&.]/.test(pwd)) score += 1;
+  
+  let text = '';
+  let color = '';
+  let width = '';
+  switch(score) {
+    case 1:
+      text = 'Çok Zayıf';
+      color = 'bg-red-500';
+      width = 'w-1/5';
+      break;
+    case 2:
+      text = 'Zayıf';
+      color = 'bg-orange-500';
+      width = 'w-2/5';
+      break;
+    case 3:
+      text = 'Orta';
+      color = 'bg-yellow-500';
+      width = 'w-3/5';
+      break;
+    case 4:
+      text = 'Güçlü';
+      color = 'bg-blue-500';
+      width = 'w-4/5';
+      break;
+    case 5:
+      text = 'Çok Güçlü';
+      color = 'bg-emerald-500';
+      width = 'w-full';
+      break;
+    default:
+      text = 'Geçersiz';
+      color = 'bg-red-500';
+      width = 'w-0';
+  }
+  return { score, text, color, width };
+};
 
 const ProfilePage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -396,6 +443,15 @@ const ProfilePage = () => {
     }
   };
 
+  const strength = checkPasswordStrength(newPassword);
+  const criteria = [
+    { label: 'En az 8 karakter', met: newPassword.length >= 8 },
+    { label: 'En az 1 büyük harf (A-Z)', met: /[A-Z]/.test(newPassword) },
+    { label: 'En az 1 küçük harf (a-z)', met: /[a-z]/.test(newPassword) },
+    { label: 'En az 1 rakam (0-9)', met: /[0-9]/.test(newPassword) },
+    { label: 'En az 1 özel karakter (@$!%*?&.)', met: /[@$!%*?&.]/.test(newPassword) }
+  ];
+
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
     setPasswordMessage({ type: '', text: '' });
@@ -405,8 +461,8 @@ const ProfilePage = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
-      setPasswordMessage({ type: 'error', text: 'Yeni şifre en az 6 karakter olmalıdır.' });
+    if (strength.score < 3) {
+      setPasswordMessage({ type: 'error', text: 'Şifreniz yeterince güçlü değil! En az "Orta" seviye şifre belirlemelisiniz.' });
       return;
     }
 
@@ -576,7 +632,6 @@ const ProfilePage = () => {
                         onChange={(e) => setNewPassword(e.target.value)}
                         className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:border-primary transition-colors"
                         required
-                        minLength={6}
                       />
                     </div>
                     <div>
@@ -587,9 +642,35 @@ const ProfilePage = () => {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:outline-none focus:border-primary transition-colors"
                         required
-                        minLength={6}
                       />
                     </div>
+
+                    {/* Şifre Gücü Göstergesi */}
+                    {newPassword && (
+                      <div className="space-y-2 p-3 bg-white/5 rounded-xl border border-white/10 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="text-foreground/75 font-medium">Şifre Gücü:</span>
+                          <span className={`font-bold ${
+                            strength.score <= 2 ? 'text-red-400' : strength.score === 3 ? 'text-yellow-400' : 'text-emerald-400'
+                          }`}>{strength.text}</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full transition-all duration-300 ${strength.color} ${strength.width}`} />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1 pt-1 text-[10px]">
+                          {criteria.map((item, idx) => (
+                            <div key={idx} className="flex items-center gap-1.5">
+                              <span className={item.met ? 'text-emerald-400 font-bold' : 'text-foreground/30'}>
+                                {item.met ? '✓' : '•'}
+                              </span>
+                              <span className={item.met ? 'text-foreground/80' : 'text-foreground/45'}>
+                                {item.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="pt-4">
                       <button
                         type="submit"
@@ -620,8 +701,8 @@ const ProfilePage = () => {
                         key={f.key}
                         onClick={() => setOrderFilter(f.key)}
                         className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all duration-200 ${orderFilter === f.key
-                            ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                            : 'bg-white/5 text-foreground/70 border-white/10 hover:bg-white/10 hover:border-white/20'
+                          ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                          : 'bg-white/5 text-foreground/70 border-white/10 hover:bg-white/10 hover:border-white/20'
                           }`}
                       >
                         {f.label} ({f.count})
@@ -740,8 +821,8 @@ const ProfilePage = () => {
                                     return (
                                       <div key={step.key} className="relative z-10 flex flex-col items-center gap-1.5" style={{ width: '25%' }}>
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all ${done
-                                            ? `${step.bg} border-transparent text-white`
-                                            : 'bg-surface border-border text-muted'
+                                          ? `${step.bg} border-transparent text-white`
+                                          : 'bg-surface border-border text-muted'
                                           } ${active ? 'ring-2 ring-offset-2 ring-primary' : ''}`}>
                                           <Icon size={14} />
                                         </div>
@@ -777,8 +858,8 @@ const ProfilePage = () => {
                         key={f.key}
                         onClick={() => setReservationFilter(f.key)}
                         className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all duration-200 ${reservationFilter === f.key
-                            ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
-                            : 'bg-white/5 text-foreground/70 border-white/10 hover:bg-white/10 hover:border-white/20'
+                          ? 'bg-primary text-white border-primary shadow-md shadow-primary/20'
+                          : 'bg-white/5 text-foreground/70 border-white/10 hover:bg-white/10 hover:border-white/20'
                           }`}
                       >
                         {f.label} ({f.count})
@@ -853,9 +934,9 @@ const ProfilePage = () => {
 
                                   <div className="text-xs text-foreground/60 space-y-1 pt-1">
                                     <p>🗓️ Tarih: <span className="text-foreground font-medium">
-                                      {workshop?.title?.includes('Seçilebilir') && res.reservation_date
+                                      {res.reservation_date
                                         ? new Date(res.reservation_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
-                                        : new Date(workshop?.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+                                        : (workshop?.date ? new Date(workshop.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş')
                                       }
                                     </span></p>
                                     <p>⏰ Saat: <span className="text-foreground font-medium">
@@ -904,10 +985,10 @@ const ProfilePage = () => {
                                           const mm = String(today.getMonth() + 1).padStart(2, '0');
                                           const dd = String(today.getDate()).padStart(2, '0');
                                           const todayStr = `${yyyy}-${mm}-${dd}`;
-                                          
+
                                           const currentRes = reservations.find(r => r.id === editingReservationId);
                                           const originalDateStr = currentRes?.reservation_date?.substring(0, 10) || todayStr;
-                                          
+
                                           return originalDateStr > todayStr ? originalDateStr : todayStr;
                                         })()}
                                         className="w-full bg-background border border-white/10 rounded-lg px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
@@ -1050,8 +1131,8 @@ const ProfilePage = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                       {/* Yeni Üye Kuponu */}
                       <div className={`border rounded-xl p-5 relative overflow-hidden flex flex-col justify-between transition-all ${!hasHistory
-                          ? 'bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border-purple-500/20'
-                          : 'bg-white/5 border-white/10 opacity-60'
+                        ? 'bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border-purple-500/20'
+                        : 'bg-white/5 border-white/10 opacity-60'
                         }`}>
                         <div>
                           <div className="flex items-center justify-between mb-3">
@@ -1078,11 +1159,10 @@ const ProfilePage = () => {
                                 setCopiedCoupon('HOSGELDIN');
                                 setTimeout(() => setCopiedCoupon(null), 2000);
                               }}
-                              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-300 ${
-                                copiedCoupon === 'HOSGELDIN'
+                              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-300 ${copiedCoupon === 'HOSGELDIN'
                                   ? 'bg-emerald-500 text-white scale-105'
                                   : 'bg-purple-500 hover:bg-purple-600 text-white'
-                              }`}
+                                }`}
                             >
                               {copiedCoupon === 'HOSGELDIN' ? '✓ Kopyalandı!' : 'Kopyala'}
                             </button>
@@ -1094,8 +1174,8 @@ const ProfilePage = () => {
 
                       {/* Sadakat Kuponu */}
                       <div className={`border rounded-xl p-5 relative overflow-hidden flex flex-col justify-between transition-all ${hasHistory
-                          ? 'bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20'
-                          : 'bg-white/5 border-white/10 border-dashed'
+                        ? 'bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20'
+                        : 'bg-white/5 border-white/10 border-dashed'
                         }`}>
                         <div>
                           <div className="flex items-center justify-between mb-3">
@@ -1115,8 +1195,8 @@ const ProfilePage = () => {
                         </div>
                         <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between gap-3 font-sans">
                           <code className={`px-3 py-1.5 rounded-lg border font-mono text-sm font-bold tracking-wider ${hasHistory
-                              ? 'bg-black/30 border-white/10 text-amber-400'
-                              : 'bg-transparent border-dashed border-white/5 text-muted/40'
+                            ? 'bg-black/30 border-white/10 text-amber-400'
+                            : 'bg-transparent border-dashed border-white/5 text-muted/40'
                             }`}>
                             {hasHistory ? 'GALERIST20' : '??????'}
                           </code>
@@ -1127,11 +1207,10 @@ const ProfilePage = () => {
                                 setCopiedCoupon('GALERIST20');
                                 setTimeout(() => setCopiedCoupon(null), 2000);
                               }}
-                              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-300 ${
-                                copiedCoupon === 'GALERIST20'
+                              className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-300 ${copiedCoupon === 'GALERIST20'
                                   ? 'bg-emerald-500 text-white scale-105'
                                   : 'bg-amber-500 hover:bg-amber-600 text-white'
-                              }`}
+                                }`}
                             >
                               {copiedCoupon === 'GALERIST20' ? '✓ Kopyalandı!' : 'Kopyala'}
                             </button>
