@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 /**
- * useToast — Artisana site içi bildirim hook'u
+ * useToast — Galerist site içi bildirim hook'u
  * Kullanım:
  *   const { showToast, ToastUI } = useToast();
  *   showToast('Mesaj!', 'success' | 'error' | 'info');

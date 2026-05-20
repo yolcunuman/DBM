@@ -30,13 +30,13 @@ const ArtistsPage = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(139,115,85,0.05),transparent_40%)]" />
         <div className="relative max-w-2xl mx-auto space-y-3">
           <span className="text-xs font-bold text-primary tracking-widest uppercase bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
-            Artisana Yaratıcıları
+            Galerist Yaratıcıları
           </span>
           <h1 className="text-4xl md:text-5xl font-serif text-secondary tracking-tight leading-tight">
             Değerli Sanatçılarımız
           </h1>
           <p className="text-muted text-sm md:text-base leading-relaxed">
-            Eserleriyle ruhumuza dokunan, geleneksel teknikleri modern estetikle buluşturan ve Artisana topluluğuna hayat veren sanatçılarımızın hikayelerini keşfedin.
+            Eserleriyle ruhumuza dokunan, geleneksel teknikleri modern estetikle buluşturan ve Galerist topluluğuna hayat veren sanatçılarımızın hikayelerini keşfedin.
           </p>
         </div>
       </div>

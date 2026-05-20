@@ -1,7 +1,7 @@
 {
-  "name": "artisana-backend",
+  "name": "galerist-backend",
   "version": "1.0.0",
-  "description": "Artisana Gallery & Studio — Backend API",
+  "description": "Galerist Gallery & Studio — Backend API",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

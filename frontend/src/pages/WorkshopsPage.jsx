@@ -8,7 +8,7 @@ const API_URL = 'http://localhost:5001/api';
 const VALID_COUPONS = {
   'SANAT10': { discount: 10, label: '%10 İndirim' },
   'YAZ10': { discount: 10, label: '%10 Yaz Fırsatı İndirimi' },
-  'ARTISANA20': { discount: 20, label: '%20 İndirim' },
+  'GALERIST20': { discount: 20, label: '%20 İndirim' },
   'HOSGELDIN': { discount: 15, label: '%15 Hoş Geldin İndirimi' },
 };
 
@@ -64,7 +64,7 @@ const WorkshopsPage = () => {
       enrolled: workshop.enrolled
     };
     try {
-      const stored = localStorage.getItem('artisana_compare');
+      const stored = localStorage.getItem('galerist_compare');
       let compareList = stored ? JSON.parse(stored) : [];
       if (compareList.length > 0 && compareList[0].type !== 'workshop') {
         compareList = [];
@@ -78,8 +78,8 @@ const WorkshopsPage = () => {
         return;
       }
       compareList.push({ ...item, type: 'workshop' });
-      localStorage.setItem('artisana_compare', JSON.stringify(compareList));
-      window.dispatchEvent(new Event('artisana-compare-updated'));
+      localStorage.setItem('galerist_compare', JSON.stringify(compareList));
+      window.dispatchEvent(new Event('galerist-compare-updated'));
       showToast('Atölye karşılaştırma listesine eklendi!', 'success');
     } catch (err) { console.error(err); }
   };
@@ -282,7 +282,7 @@ const WorkshopsPage = () => {
               <div className="relative h-52 bg-muted-bg overflow-hidden">
                 {w.image_url
                   ? <img src={w.image_url} alt={w.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                  : <div className="w-full h-full flex items-center justify-center text-primary-light font-serif text-2xl opacity-30">Artisana</div>
+                  : <div className="w-full h-full flex items-center justify-center text-primary-light font-serif text-2xl opacity-30">Galerist</div>
                 }
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-sm text-xs font-bold text-primary">{w.category}</div>
                 {/* Kampanya Badge */}
@@ -372,7 +372,7 @@ const WorkshopsPage = () => {
             <div className="relative h-56 bg-muted-bg">
               {selectedWorkshop.image_url
                 ? <img src={selectedWorkshop.image_url} alt={selectedWorkshop.title} className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-primary-light font-serif text-3xl opacity-30">Artisana</div>
+                : <div className="w-full h-full flex items-center justify-center text-primary-light font-serif text-3xl opacity-30">Galerist</div>
               }
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <button onClick={closeDetail} className="absolute top-3 right-3 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center hover:bg-white transition-colors z-10">
@@ -566,7 +566,7 @@ const WorkshopsPage = () => {
                       ) : (
                         <div className="bg-muted-bg/50 border border-border rounded-lg p-3 text-xs space-y-2 text-muted leading-relaxed">
                           <p className="font-bold text-secondary">Banka Hesap Bilgilerimiz:</p>
-                          <p><strong>Banka:</strong> Artisana Sanat A.Ş.</p>
+                          <p><strong>Banka:</strong> Galerist Sanat A.Ş.</p>
                           <p><strong>IBAN:</strong> TR99 0006 2000 0000 1234 5678 90</p>
                           <p className="text-[10px] text-error-light">* Lütfen havale açıklama kısmına kayıt olduğunuz atölye ismini yazınız.</p>
                         </div>

@@ -13,7 +13,7 @@ const Navbar = () => {
 
   const readCartCount = () => {
     try {
-      const cart = JSON.parse(localStorage.getItem('artisana_cart') || '[]');
+      const cart = JSON.parse(localStorage.getItem('galerist_cart') || '[]');
       setCartCount(cart.reduce((s, i) => s + i.quantity, 0));
     } catch { setCartCount(0); }
   };
@@ -34,12 +34,12 @@ const Navbar = () => {
       setUser(updatedUser ? JSON.parse(updatedUser) : null);
     };
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('artisana_cart_updated', readCartCount);
+    window.addEventListener('galerist_cart_updated', readCartCount);
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('artisana_cart_updated', readCartCount);
+      window.removeEventListener('galerist_cart_updated', readCartCount);
     };
   }, []);
 
@@ -84,10 +84,10 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-primary rounded-sm flex items-center justify-center group-hover:bg-primary-dark transition-colors">
-              <span className="text-white font-serif text-lg font-bold">A</span>
+              <span className="text-white font-serif text-lg font-bold">G</span>
             </div>
             <div className="flex flex-col">
-              <span className="font-serif text-xl font-bold tracking-tight text-foreground leading-none">Artisana</span>
+              <span className="font-serif text-xl font-bold tracking-tight text-foreground leading-none">Galerist</span>
               <span className="text-[10px] tracking-[0.2em] uppercase text-muted font-medium">Gallery & Studio</span>
             </div>
           </Link>
@@ -165,11 +165,11 @@ const Navbar = () => {
                       </Link>
 
                       <button 
-                        onClick={() => window.dispatchEvent(new Event('open-artisana-assistant'))}
+                        onClick={() => window.dispatchEvent(new Event('open-galerist-assistant'))}
                         className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-foreground/80 hover:bg-primary/5 hover:text-primary transition-colors"
                       >
                         <Headset size={18} className="text-foreground/60 group-hover/link:text-primary" />
-                        <span>Artisana Asistan</span>
+                        <span>Galerist Asistan</span>
                       </button>
                     </div>
 

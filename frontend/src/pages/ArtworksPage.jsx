@@ -12,8 +12,8 @@ const CAMPAIGN_ARTWORKS = {
   8: { discount: 25, tag: 'Sanatçı Özel' }
 };
 
-const getCart = () => { try { return JSON.parse(localStorage.getItem('artisana_cart') || '[]'); } catch { return []; } };
-const saveCart = (c) => { localStorage.setItem('artisana_cart', JSON.stringify(c)); window.dispatchEvent(new Event('artisana_cart_updated')); };
+const getCart = () => { try { return JSON.parse(localStorage.getItem('galerist_cart') || '[]'); } catch { return []; } };
+const saveCart = (c) => { localStorage.setItem('galerist_cart', JSON.stringify(c)); window.dispatchEvent(new Event('galerist_cart_updated')); };
 
 const ArtworksPage = () => {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ const ArtworksPage = () => {
 
   const syncCartItems = () => {
     try {
-      const cart = JSON.parse(localStorage.getItem('artisana_cart') || '[]');
+      const cart = JSON.parse(localStorage.getItem('galerist_cart') || '[]');
       setCartItems(new Set(cart.map(i => i.id)));
     } catch { setCartItems(new Set()); }
   };
@@ -78,8 +78,8 @@ const ArtworksPage = () => {
       .then(res => res.json())
       .then(data => { if (data.success) setCategories(data.data); });
     syncCartItems();
-    window.addEventListener('artisana_cart_updated', syncCartItems);
-    return () => window.removeEventListener('artisana_cart_updated', syncCartItems);
+    window.addEventListener('galerist_cart_updated', syncCartItems);
+    return () => window.removeEventListener('galerist_cart_updated', syncCartItems);
   }, []);
 
   // Favorileri çek
@@ -153,7 +153,7 @@ const ArtworksPage = () => {
       year: artwork.year
     };
     try {
-      const stored = localStorage.getItem('artisana_compare');
+      const stored = localStorage.getItem('galerist_compare');
       let compareList = stored ? JSON.parse(stored) : [];
       if (compareList.length > 0 && compareList[0].type !== 'artwork') {
         compareList = [];
@@ -167,8 +167,8 @@ const ArtworksPage = () => {
         return;
       }
       compareList.push({ ...item, type: 'artwork' });
-      localStorage.setItem('artisana_compare', JSON.stringify(compareList));
-      window.dispatchEvent(new Event('artisana-compare-updated'));
+      localStorage.setItem('galerist_compare', JSON.stringify(compareList));
+      window.dispatchEvent(new Event('galerist-compare-updated'));
       showToast('Eser karşılaştırma listesine eklendi!', 'success');
     } catch (err) { console.error(err); }
   };

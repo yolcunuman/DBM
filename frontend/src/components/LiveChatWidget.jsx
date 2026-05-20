@@ -6,7 +6,7 @@ const LiveChatWidget = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 1, text: "Merhaba! Artisana canlı desteğe hoş geldiniz. Size nasıl yardımcı olabilirim?", sender: 'bot', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    { id: 1, text: "Merhaba! Galerist canlı desteğe hoş geldiniz. Size nasıl yardımcı olabilirim?", sender: 'bot', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [artworks, setArtworks] = useState([]);
@@ -22,14 +22,14 @@ const LiveChatWidget = () => {
     const handleOpenRequest = () => {
       setIsOpen(true);
     };
-    window.addEventListener('open-artisana-assistant', handleOpenRequest);
-    return () => window.removeEventListener('open-artisana-assistant', handleOpenRequest);
+    window.addEventListener('open-galerist-assistant', handleOpenRequest);
+    return () => window.removeEventListener('open-galerist-assistant', handleOpenRequest);
   }, []);
 
   // Reset messages when user logs in, logs out, or switches accounts
   useEffect(() => {
     setMessages([
-      { id: 1, text: "Merhaba! Artisana canlı desteğe hoş geldiniz. Size nasıl yardımcı olabilirim?", sender: 'bot', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+      { id: 1, text: "Merhaba! Galerist canlı desteğe hoş geldiniz. Size nasıl yardımcı olabilirim?", sender: 'bot', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
     ]);
   }, [userId]);
 

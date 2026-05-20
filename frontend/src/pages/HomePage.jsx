@@ -112,7 +112,7 @@ const HomePage = () => {
             </span>
           </h1>
           <p className="text-lg text-white/70 max-w-xl mb-10 leading-relaxed">
-            Artisana ile Türkiye'nin en yetenekli sanatçılarının eserlerini keşfedin, 
+            Galerist ile Türkiye'nin en yetenekli sanatçılarının eserlerini keşfedin, 
             atölye etkinliklerine katılın ve sanat koleksiyonunuzu oluşturmaya başlayın.
           </p>
 
@@ -393,7 +393,7 @@ const HomePage = () => {
           Sanat Yolculuğunuza Başlayın
         </h2>
         <p className="text-muted max-w-xl mx-auto">
-          Artisana ile eşsiz sanat eserlerine sahip olun, atölye etkinliklerine katılın 
+          Galerist ile eşsiz sanat eserlerine sahip olun, atölye etkinliklerine katılın 
           ve yaratıcı topluluğumuzun bir parçası olun.
         </p>
         <div className="flex items-center justify-center gap-4 flex-wrap">

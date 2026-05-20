@@ -19,7 +19,7 @@ const SEED_WORKSHOPS = [
     price: 450,
     capacity: 15,
     enrolled: 8,
-    location: 'Artisana Stüdyo, Beyoğlu - İstanbul',
+    location: 'Galerist Stüdyo, Beyoğlu - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1580136579312-94651dfd596d?w=600',
     status: 'active'
   },
@@ -34,7 +34,7 @@ const SEED_WORKSHOPS = [
     price: 600,
     capacity: 12,
     enrolled: 10,
-    location: 'Artisana Seramik Atölyesi, Karaköy - İstanbul',
+    location: 'Galerist Seramik Atölyesi, Karaköy - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=600',
     status: 'active'
   },
@@ -49,7 +49,7 @@ const SEED_WORKSHOPS = [
     price: 850,
     capacity: 10,
     enrolled: 7,
-    location: 'Artisana Galeri Atölyesi, Nişantaşı - İstanbul',
+    location: 'Galerist Galeri Atölyesi, Nişantaşı - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=600',
     status: 'active'
   },
@@ -64,7 +64,7 @@ const SEED_WORKSHOPS = [
     price: 500,
     capacity: 20,
     enrolled: 13,
-    location: 'Artisana Dijital Stüdyo, Kadıköy - İstanbul',
+    location: 'Galerist Dijital Stüdyo, Kadıköy - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=600',
     status: 'active'
   },
@@ -79,7 +79,7 @@ const SEED_WORKSHOPS = [
     price: 1200,
     capacity: 8,
     enrolled: 6,
-    location: 'Artisana Seramik Fırın, Moda - İstanbul',
+    location: 'Galerist Seramik Fırın, Moda - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600',
     status: 'active'
   },
@@ -94,7 +94,7 @@ const SEED_WORKSHOPS = [
     price: 380,
     capacity: 16,
     enrolled: 5,
-    location: 'Artisana Workshop, Cihangir - İstanbul',
+    location: 'Galerist Workshop, Cihangir - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1563089145-599997674d42?w=600',
     status: 'active'
   },
@@ -109,7 +109,7 @@ const SEED_WORKSHOPS = [
     price: 750,
     capacity: 18,
     enrolled: 14,
-    location: 'Artisana Dijital Merkezi, Şişli - İstanbul',
+    location: 'Galerist Dijital Merkezi, Şişli - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600',
     status: 'active'
   },
@@ -124,7 +124,7 @@ const SEED_WORKSHOPS = [
     price: 550,
     capacity: 14,
     enrolled: 9,
-    location: 'Artisana El Sanatları Atölyesi, Üsküdar - İstanbul',
+    location: 'Galerist El Sanatları Atölyesi, Üsküdar - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?w=600',
     status: 'active'
   },
@@ -139,7 +139,7 @@ const SEED_WORKSHOPS = [
     price: 900,
     capacity: 12,
     enrolled: 4,
-    location: 'Artisana Büyük Salon, Beylikdüzü - İstanbul',
+    location: 'Galerist Büyük Salon, Beylikdüzü - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=600',
     status: 'active'
   },
@@ -154,7 +154,7 @@ const SEED_WORKSHOPS = [
     price: 1400,
     capacity: 8,
     enrolled: 7,
-    location: 'Artisana Cam Stüdyo, Pendik - İstanbul',
+    location: 'Galerist Cam Stüdyo, Pendik - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?w=600',
     status: 'active'
   },
@@ -169,7 +169,7 @@ const SEED_WORKSHOPS = [
     price: 1500,
     capacity: 5,
     enrolled: 0,
-    location: 'Artisana Seramik Atölyesi, Karaköy - İstanbul',
+    location: 'Galerist Seramik Atölyesi, Karaköy - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600',
     status: 'active'
   },
@@ -184,7 +184,7 @@ const SEED_WORKSHOPS = [
     price: 1200,
     capacity: 5,
     enrolled: 0,
-    location: 'Artisana Stüdyo, Beyoğlu - İstanbul',
+    location: 'Galerist Stüdyo, Beyoğlu - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600',
     status: 'active'
   },
@@ -199,7 +199,7 @@ const SEED_WORKSHOPS = [
     price: 1800,
     capacity: 5,
     enrolled: 0,
-    location: 'Artisana Seramik Atölyesi, Karaköy - İstanbul',
+    location: 'Galerist Seramik Atölyesi, Karaköy - İstanbul',
     image_url: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=600',
     status: 'active'
   }
@@ -356,7 +356,7 @@ const createReservation = async (req, res) => {
       for (const code of codes) {
         let discountPct = 0;
         if (code === 'SANAT10' || code === 'YAZ10') discountPct = 10;
-        else if (code === 'ARTISANA20') discountPct = 20;
+        else if (code === 'GALERIST20') discountPct = 20;
         else if (code === 'HOSGELDIN') discountPct = 15;
 
         if (discountPct > 0) {

@@ -3,8 +3,8 @@ import { Heart, Trash2, ShoppingCart, Eye, Palette, CheckCircle } from 'lucide-r
 import { Link, useNavigate } from 'react-router-dom';
 
 const API_URL = 'http://localhost:5001/api';
-const getCart = () => { try { return JSON.parse(localStorage.getItem('artisana_cart') || '[]'); } catch { return []; } };
-const saveCart = (c) => { localStorage.setItem('artisana_cart', JSON.stringify(c)); window.dispatchEvent(new Event('artisana_cart_updated')); };
+const getCart = () => { try { return JSON.parse(localStorage.getItem('galerist_cart') || '[]'); } catch { return []; } };
+const saveCart = (c) => { localStorage.setItem('galerist_cart', JSON.stringify(c)); window.dispatchEvent(new Event('galerist_cart_updated')); };
 
 const FavoritesPage = () => {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ const FavoritesPage = () => {
   
   const syncCartItems = () => {
     try {
-      const cart = JSON.parse(localStorage.getItem('artisana_cart') || '[]');
+      const cart = JSON.parse(localStorage.getItem('galerist_cart') || '[]');
       setCartItems(new Set(cart.map(i => i.id)));
     } catch { setCartItems(new Set()); }
   };
@@ -37,8 +37,8 @@ const FavoritesPage = () => {
   useEffect(() => {
     fetchFavorites();
     syncCartItems();
-    window.addEventListener('artisana_cart_updated', syncCartItems);
-    return () => window.removeEventListener('artisana_cart_updated', syncCartItems);
+    window.addEventListener('galerist_cart_updated', syncCartItems);
+    return () => window.removeEventListener('galerist_cart_updated', syncCartItems);
   }, []);
 
   const removeFavorite = (id) => {

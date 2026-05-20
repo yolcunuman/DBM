@@ -8,7 +8,7 @@ const { Order, Artwork, User } = require('../models');
 const VALID_COUPONS = {
   'SANAT10': { discount: 10, label: '%10 İndirim' },
   'YAZ10': { discount: 10, label: '%10 Yaz Fırsatı İndirimi' },
-  'ARTISANA20': { discount: 20, label: '%20 İndirim' },
+  'GALERIST20': { discount: 20, label: '%20 İndirim' },
   'HOSGELDIN': { discount: 15, label: '%15 Hoş Geldin İndirimi' },
 };
 

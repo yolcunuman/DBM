@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════
-//  Artisana Backend — Ana Server Dosyası
+//  Galerist Backend — Ana Server Dosyası
 // ═══════════════════════════════════════════════
 
 require('dotenv').config();
@@ -43,7 +43,7 @@ app.use('/api/auth', authRoutes);
 app.get('/api/health', (req, res) => {
   res.json({
     success: true,
-    message: 'Artisana API çalışıyor! 🎨',
+    message: 'Galerist API çalışıyor! 🎨',
     timestamp: new Date().toISOString(),
   });
 });
@@ -101,7 +101,7 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`
   ═══════════════════════════════════════════════
-   🎨 Artisana API — Geliştirici 2
+   🎨 Galerist API — Geliştirici 2
    📡 http://localhost:${PORT}
    🗃️  Veritabanı: ${process.env.USE_LOCAL_SQLITE === 'true' ? 'SQLite (Supabase REST API Köprü Modu)' : 'PostgreSQL (Canlı Supabase)'}
    🌐 CORS: ${process.env.CLIENT_URL}

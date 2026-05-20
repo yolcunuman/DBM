@@ -118,7 +118,7 @@ const ArtworkDetailPage = () => {
                   year: artwork.year
                 };
                 try {
-                  const stored = localStorage.getItem('artisana_compare');
+                  const stored = localStorage.getItem('galerist_compare');
                   let compareList = stored ? JSON.parse(stored) : [];
                   if (compareList.length > 0 && compareList[0].type !== 'artwork') {
                     compareList = [];
@@ -132,8 +132,8 @@ const ArtworkDetailPage = () => {
                     return;
                   }
                   compareList.push({ ...item, type: 'artwork' });
-                  localStorage.setItem('artisana_compare', JSON.stringify(compareList));
-                  window.dispatchEvent(new Event('artisana-compare-updated'));
+                  localStorage.setItem('galerist_compare', JSON.stringify(compareList));
+                  window.dispatchEvent(new Event('galerist-compare-updated'));
                   showToast('Eser karşılaştırma listesine eklendi!', 'success');
                 } catch (e) { console.error(e); }
               }}

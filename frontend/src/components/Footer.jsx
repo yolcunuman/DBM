@@ -13,10 +13,10 @@ const Footer = () => {
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-5">
               <div className="w-10 h-10 bg-primary rounded-sm flex items-center justify-center">
-                <span className="text-white font-serif text-lg font-bold">A</span>
+                <span className="text-white font-serif text-lg font-bold">G</span>
               </div>
               <div>
-                <span className="font-serif text-xl font-bold text-white block leading-none">Artisana</span>
+                <span className="font-serif text-xl font-bold text-white block leading-none">Galerist</span>
                 <span className="text-[10px] tracking-[0.2em] uppercase text-white/50">Gallery & Studio</span>
               </div>
             </div>
@@ -72,7 +72,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={16} className="text-primary shrink-0" />
-                <span className="text-sm text-white/60">info@artisana.com</span>
+                <span className="text-sm text-white/60">info@galerist.com</span>
               </li>
             </ul>
           </div>
@@ -82,7 +82,7 @@ const Footer = () => {
       {/* Bottom Bar */}
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-3">
-          <p className="text-xs text-white/40">© 2026 Artisana Gallery & Studio. Tüm hakları saklıdır.</p>
+          <p className="text-xs text-white/40">© 2026 Galerist Gallery & Studio. Tüm hakları saklıdır.</p>
           <div className="flex gap-6">
             <a href="#" className="text-xs text-white/40 hover:text-white/70 transition-colors">Gizlilik Politikası</a>
             <a href="#" className="text-xs text-white/40 hover:text-white/70 transition-colors">Kullanım Şartları</a>

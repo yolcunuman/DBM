@@ -8,7 +8,7 @@ const API_URL = 'http://localhost:5001/api';
 const VALID_COUPONS = {
   'SANAT10': { discount: 10, label: '%10 İndirim' },
   'YAZ10': { discount: 10, label: '%10 Yaz Fırsatı İndirimi' },
-  'ARTISANA20': { discount: 20, label: '%20 İndirim' },
+  'GALERIST20': { discount: 20, label: '%20 İndirim' },
   'HOSGELDIN': { discount: 15, label: '%15 Hoş Geldin İndirimi' },
 };
 
@@ -36,8 +36,8 @@ const CheckoutPage = () => {
     if (found) {
       const couponObj = { code, ...found };
       setAppliedCheckoutCoupon(couponObj);
-      localStorage.setItem('artisana_checkout_coupon', JSON.stringify(couponObj));
-      window.dispatchEvent(new Event('artisana_cart_updated'));
+      localStorage.setItem('galerist_checkout_coupon', JSON.stringify(couponObj));
+      window.dispatchEvent(new Event('galerist_cart_updated'));
       setCouponCode('');
     } else {
       setCouponError('Geçersiz kupon kodu.');
@@ -46,8 +46,8 @@ const CheckoutPage = () => {
 
   const handleRemoveCoupon = () => {
     setAppliedCheckoutCoupon(null);
-    localStorage.removeItem('artisana_checkout_coupon');
-    window.dispatchEvent(new Event('artisana_cart_updated'));
+    localStorage.removeItem('galerist_checkout_coupon');
+    window.dispatchEvent(new Event('galerist_cart_updated'));
     setCouponCode('');
   };
 
@@ -65,15 +65,15 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     const loadData = () => {
-      const stored = localStorage.getItem('artisana_cart');
+      const stored = localStorage.getItem('galerist_cart');
       if (stored) try { setCart(JSON.parse(stored)); } catch {}
-      const promo = localStorage.getItem('artisana_coupon');
+      const promo = localStorage.getItem('galerist_coupon');
       if (promo) {
         try { setAppliedCoupon(JSON.parse(promo)); } catch {}
       } else {
         setAppliedCoupon(null);
       }
-      const checkout = localStorage.getItem('artisana_checkout_coupon');
+      const checkout = localStorage.getItem('galerist_checkout_coupon');
       if (checkout) {
         try { setAppliedCheckoutCoupon(JSON.parse(checkout)); } catch {}
       } else {
@@ -81,9 +81,9 @@ const CheckoutPage = () => {
       }
     };
     loadData();
-    window.addEventListener('artisana_cart_updated', loadData);
+    window.addEventListener('galerist_cart_updated', loadData);
     if (!userStr) navigate('/login');
-    return () => window.removeEventListener('artisana_cart_updated', loadData);
+    return () => window.removeEventListener('galerist_cart_updated', loadData);
   }, []);
 
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
@@ -182,10 +182,10 @@ const CheckoutPage = () => {
           throw new Error(data.message || 'Sipariş oluşturulamadı.');
         }
       }
-      localStorage.removeItem('artisana_cart');
-      localStorage.removeItem('artisana_coupon');
-      localStorage.removeItem('artisana_checkout_coupon');
-      window.dispatchEvent(new Event('artisana_cart_updated'));
+      localStorage.removeItem('galerist_cart');
+      localStorage.removeItem('galerist_coupon');
+      localStorage.removeItem('galerist_checkout_coupon');
+      window.dispatchEvent(new Event('galerist_cart_updated'));
       setOrderSuccess(true);
       setTimeout(() => navigate('/profile?tab=orders'), 4000);
     } catch (error) { 

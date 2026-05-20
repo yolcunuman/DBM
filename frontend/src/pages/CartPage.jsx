@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const VALID_COUPONS = {
   'SANAT10': { discount: 10, label: '%10 İndirim' },
-  'ARTISANA20': { discount: 20, label: '%20 İndirim' },
+  'GALERIST20': { discount: 20, label: '%20 İndirim' },
   'HOSGELDIN': { discount: 15, label: '%15 Hoş Geldin İndirimi' },
 };
 
@@ -18,11 +18,11 @@ const CartPage = () => {
 
   // Load cart and coupon from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem('artisana_cart');
+    const stored = localStorage.getItem('galerist_cart');
     if (stored) {
       try { setCart(JSON.parse(stored)); } catch {}
     }
-    const coupon = localStorage.getItem('artisana_coupon');
+    const coupon = localStorage.getItem('galerist_coupon');
     if (coupon) {
       try {
         const parsed = JSON.parse(coupon);
@@ -32,9 +32,9 @@ const CartPage = () => {
     }
     // Listen for cart updates from other pages
     const onStorage = () => {
-      const s = localStorage.getItem('artisana_cart');
+      const s = localStorage.getItem('galerist_cart');
       if (s) try { setCart(JSON.parse(s)); } catch {}
-      const c = localStorage.getItem('artisana_coupon');
+      const c = localStorage.getItem('galerist_coupon');
       if (c) {
         try {
           const parsed = JSON.parse(c);
@@ -46,14 +46,14 @@ const CartPage = () => {
         setCouponSuccess('');
       }
     };
-    window.addEventListener('artisana_cart_updated', onStorage);
-    return () => window.removeEventListener('artisana_cart_updated', onStorage);
+    window.addEventListener('galerist_cart_updated', onStorage);
+    return () => window.removeEventListener('galerist_cart_updated', onStorage);
   }, []);
 
   const saveCart = (updated) => {
     setCart(updated);
-    localStorage.setItem('artisana_cart', JSON.stringify(updated));
-    window.dispatchEvent(new Event('artisana_cart_updated'));
+    localStorage.setItem('galerist_cart', JSON.stringify(updated));
+    window.dispatchEvent(new Event('galerist_cart_updated'));
   };
 
   const removeItem = (artworkId) => {
@@ -78,8 +78,8 @@ const CartPage = () => {
     if (found) {
       const couponObj = { code, ...found };
       setAppliedCoupon(couponObj);
-      localStorage.setItem('artisana_coupon', JSON.stringify(couponObj));
-      window.dispatchEvent(new Event('artisana_cart_updated'));
+      localStorage.setItem('galerist_coupon', JSON.stringify(couponObj));
+      window.dispatchEvent(new Event('galerist_cart_updated'));
       setCouponSuccess(`"${code}" kodu uygulandı! ${found.label} kazandınız.`);
       setCouponCode('');
     } else {
@@ -89,8 +89,8 @@ const CartPage = () => {
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
-    localStorage.removeItem('artisana_coupon');
-    window.dispatchEvent(new Event('artisana_cart_updated'));
+    localStorage.removeItem('galerist_coupon');
+    window.dispatchEvent(new Event('galerist_cart_updated'));
     setCouponSuccess('');
     setCouponCode('');
   };

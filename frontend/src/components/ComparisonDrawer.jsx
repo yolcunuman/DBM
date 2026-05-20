@@ -104,7 +104,7 @@ const ComparisonDrawer = () => {
 
   const loadItems = () => {
     try {
-      const stored = localStorage.getItem('artisana_compare');
+      const stored = localStorage.getItem('galerist_compare');
       setItems(stored ? JSON.parse(stored) : []);
     } catch (e) {
       setItems([]);
@@ -114,25 +114,25 @@ const ComparisonDrawer = () => {
   useEffect(() => {
     loadItems();
     const handleOpen = () => setIsOpen(true);
-    window.addEventListener('artisana-compare-updated', loadItems);
-    window.addEventListener('artisana-compare-open', handleOpen);
+    window.addEventListener('galerist-compare-updated', loadItems);
+    window.addEventListener('galerist-compare-open', handleOpen);
     return () => {
-      window.removeEventListener('artisana-compare-updated', loadItems);
-      window.removeEventListener('artisana-compare-open', handleOpen);
+      window.removeEventListener('galerist-compare-updated', loadItems);
+      window.removeEventListener('galerist-compare-open', handleOpen);
     };
   }, []);
 
   const handleRemove = (id) => {
     const updated = items.filter(item => item.id !== id);
-    localStorage.setItem('artisana_compare', JSON.stringify(updated));
+    localStorage.setItem('galerist_compare', JSON.stringify(updated));
     setItems(updated);
-    window.dispatchEvent(new Event('artisana-compare-updated'));
+    window.dispatchEvent(new Event('galerist-compare-updated'));
   };
 
   const handleClear = () => {
-    localStorage.removeItem('artisana_compare');
+    localStorage.removeItem('galerist_compare');
     setItems([]);
-    window.dispatchEvent(new Event('artisana-compare-updated'));
+    window.dispatchEvent(new Event('galerist-compare-updated'));
   };
 
   const handleSaveComparison = () => {
@@ -146,7 +146,7 @@ const ComparisonDrawer = () => {
     const userId = user ? user.id : 'guest';
     
     try {
-      const stored = localStorage.getItem(`artisana_saved_comparisons_${userId}`);
+      const stored = localStorage.getItem(`galerist_saved_comparisons_${userId}`);
       const savedComparisons = stored ? JSON.parse(stored) : [];
       
       const newSave = {
@@ -159,10 +159,10 @@ const ComparisonDrawer = () => {
       };
       
       savedComparisons.unshift(newSave);
-      localStorage.setItem(`artisana_saved_comparisons_${userId}`, JSON.stringify(savedComparisons));
+      localStorage.setItem(`galerist_saved_comparisons_${userId}`, JSON.stringify(savedComparisons));
       
       showToast("Karşılaştırma sonuçları başarıyla kaydedildi! Profilinizdeki 'Karşılaştırmalarım' sekmesinden dilediğiniz zaman erişebilirsiniz.");
-      window.dispatchEvent(new Event('artisana-saved-comparisons-updated'));
+      window.dispatchEvent(new Event('galerist-saved-comparisons-updated'));
     } catch (e) {
       console.error(e);
       showToast("Karşılaştırma kaydedilirken bir hata oluştu.", "error");

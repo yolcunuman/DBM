@@ -1001,7 +1001,7 @@ const ProfilePage = () => {
                               <div className="flex justify-between items-start mb-2">
                                 <div>
                                   <h3 className="font-medium text-foreground mb-1">
-                                    <span className="font-bold text-primary mr-2">Artisana</span>
+                                    <span className="font-bold text-primary mr-2">Galerist</span>
                                     {targetTitle}
                                   </h3>
                                   <div className="flex items-center gap-1">
@@ -1027,7 +1027,7 @@ const ProfilePage = () => {
 
                               {review.admin_reply && (
                                 <div className="mt-3 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                                  <p className="text-xs font-semibold text-primary mb-1">Artisana Yanıtı:</p>
+                                  <p className="text-xs font-semibold text-primary mb-1">Galerist Yanıtı:</p>
                                   <p className="text-sm">{review.admin_reply}</p>
                                 </div>
                               )}
@@ -1045,7 +1045,7 @@ const ProfilePage = () => {
                 return (
                   <div className="space-y-6">
                     <h2 className="text-2xl font-serif mb-2 border-b border-white/10 pb-4">🎉 Sana Özel Fırsatlar</h2>
-                    <p className="text-sm text-foreground/70">Artisana topluluğuna katıldığın için senin hesabına tanımladığımız özel indirim kuponları ve avantajlar aşağıdadır:</p>
+                    <p className="text-sm text-foreground/70">Galerist topluluğuna katıldığın için senin hesabına tanımladığımız özel indirim kuponları ve avantajlar aşağıdadır:</p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                       {/* Yeni Üye Kuponu */}
@@ -1106,7 +1106,7 @@ const ProfilePage = () => {
                               {hasHistory ? '🟢 Aktif' : '🔒 Kilitli'}
                             </span>
                           </div>
-                          <h4 className="font-bold text-foreground text-lg leading-tight">Artisana Dostu İndirimi</h4>
+                          <h4 className="font-bold text-foreground text-lg leading-tight">Galerist Dostu İndirimi</h4>
                           <p className="text-xs text-foreground/60 mt-1.5 leading-relaxed">
                             {hasHistory
                               ? 'Topluluğumuzda aktif olduğun için tüm alışverişlerinde geçerli %20 VIP sadakat indirimi!'
@@ -1118,22 +1118,22 @@ const ProfilePage = () => {
                               ? 'bg-black/30 border-white/10 text-amber-400'
                               : 'bg-transparent border-dashed border-white/5 text-muted/40'
                             }`}>
-                            {hasHistory ? 'ARTISANA20' : '??????'}
+                            {hasHistory ? 'GALERIST20' : '??????'}
                           </code>
                           {hasHistory ? (
                             <button
                               onClick={() => {
-                                navigator.clipboard.writeText('ARTISANA20');
-                                setCopiedCoupon('ARTISANA20');
+                                navigator.clipboard.writeText('GALERIST20');
+                                setCopiedCoupon('GALERIST20');
                                 setTimeout(() => setCopiedCoupon(null), 2000);
                               }}
                               className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-300 ${
-                                copiedCoupon === 'ARTISANA20'
+                                copiedCoupon === 'GALERIST20'
                                   ? 'bg-emerald-500 text-white scale-105'
                                   : 'bg-amber-500 hover:bg-amber-600 text-white'
                               }`}
                             >
-                              {copiedCoupon === 'ARTISANA20' ? '✓ Kopyalandı!' : 'Kopyala'}
+                              {copiedCoupon === 'GALERIST20' ? '✓ Kopyalandı!' : 'Kopyala'}
                             </button>
                           ) : (
                             <span className="text-xs text-muted font-medium py-1.5">🔒 Kilitli</span>
@@ -1147,7 +1147,7 @@ const ProfilePage = () => {
                       <span className="text-lg">📢</span>
                       <div>
                         <h5 className="text-xs font-bold uppercase tracking-wider text-primary">Sana Özel Bilgilendirme</h5>
-                        <p className="text-xs text-foreground/70 mt-1 leading-relaxed">Artisana Premium sadakat programı kapsamında, yaptığın alışverişler ve katıldığın atölyeler doğrultusunda sana özel yeni teklifler ve indirimler burada güncellenecektir. Bizi takip etmeye devam et!</p>
+                        <p className="text-xs text-foreground/70 mt-1 leading-relaxed">Galerist Premium sadakat programı kapsamında, yaptığın alışverişler ve katıldığın atölyeler doğrultusunda sana özel yeni teklifler ve indirimler burada güncellenecektir. Bizi takip etmeye devam et!</p>
                       </div>
                     </div>
                   </div>
@@ -1162,7 +1162,7 @@ const ProfilePage = () => {
 
                 let savedList = [];
                 try {
-                  const stored = localStorage.getItem(`artisana_saved_comparisons_${userId}`);
+                  const stored = localStorage.getItem(`galerist_saved_comparisons_${userId}`);
                   savedList = stored ? JSON.parse(stored) : [];
                 } catch (e) {
                   savedList = [];
@@ -1170,14 +1170,14 @@ const ProfilePage = () => {
 
                 const handleDeleteSave = (id) => {
                   const updated = savedList.filter(item => item.id !== id);
-                  localStorage.setItem(`artisana_saved_comparisons_${userId}`, JSON.stringify(updated));
+                  localStorage.setItem(`galerist_saved_comparisons_${userId}`, JSON.stringify(updated));
                   handleTabChange('comparisons');
                 };
 
                 const handleLoadSave = (saved) => {
-                  localStorage.setItem('artisana_compare', JSON.stringify(saved.items));
-                  window.dispatchEvent(new Event('artisana-compare-updated'));
-                  window.dispatchEvent(new Event('artisana-compare-open'));
+                  localStorage.setItem('galerist_compare', JSON.stringify(saved.items));
+                  window.dispatchEvent(new Event('galerist-compare-updated'));
+                  window.dispatchEvent(new Event('galerist-compare-open'));
                   showToast(`"${saved.title}" aktif edildi! Sayfanın altındaki karşılaştırma çubuğundan görebilirsiniz.`, 'success');
                 };
 
