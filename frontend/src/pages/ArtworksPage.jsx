@@ -30,6 +30,7 @@ const ArtworksPage = () => {
   const [sortBy, setSortBy] = useState('newest');
   const [selectedArtwork, setSelectedArtwork] = useState(null);
   const [cartItems, setCartItems] = useState(new Set());
+  const [lightboxImage, setLightboxImage] = useState(null);
 
   const syncCartItems = () => {
     try {
@@ -240,7 +241,13 @@ const ArtworksPage = () => {
               {/* Görsel */}
               <div className="relative h-64 bg-muted-bg overflow-hidden">
                 {artwork.image_url ? (
-                  <img src={artwork.image_url} alt={artwork.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <img 
+                    src={artwork.image_url} 
+                    alt={artwork.title} 
+                    onClick={() => setLightboxImage({ url: artwork.image_url, title: artwork.title, artist: artwork.artist_name })}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 cursor-zoom-in" 
+                    title="Görseli büyütmek için tıklayın"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-primary-light font-serif text-2xl opacity-40"><Palette size={48} /></div>
                 )}
@@ -252,18 +259,18 @@ const ArtworksPage = () => {
                   <Heart size={18} fill={isFav ? 'currentColor' : 'none'} />
                 </button>
                 {/* Kategori Badge */}
-                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-sm text-xs font-bold text-primary">
+                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-sm text-xs font-bold text-primary pointer-events-none">
                   {artwork.category}
                 </div>
                 {/* Kampanya Badge */}
                 {CAMPAIGN_ARTWORKS[artwork.id] && (
-                  <div className="absolute top-12 left-3 bg-amber-500 text-white px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1 animate-pulse z-10">
+                  <div className="absolute top-12 left-3 bg-amber-500 text-white px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wider shadow-sm flex items-center gap-1 animate-pulse z-10 pointer-events-none">
                     🔥 {CAMPAIGN_ARTWORKS[artwork.id].tag}
                   </div>
                 )}
                 {/* Stok Durumu */}
                 {!artwork.is_available && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
                     <span className="bg-error text-white px-4 py-2 rounded-sm font-bold text-sm">SATILDI</span>
                   </div>
                 )}
@@ -466,6 +473,40 @@ const ArtworksPage = () => {
         </div>
       )}
       {ToastUI}
+
+      {/* Görsel Büyütme Lightbox Modalı */}
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setLightboxImage(null)}
+        >
+          {/* Kapat Butonu */}
+          <button 
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 p-2.5 rounded-full z-50"
+            title="Kapat"
+          >
+            <X size={24} />
+          </button>
+          
+          {/* Görsel Çerçevesi */}
+          <div 
+            className="max-w-4xl max-h-[85vh] relative overflow-hidden rounded-lg shadow-2xl flex flex-col bg-black/50"
+            onClick={e => e.stopPropagation()}
+          >
+            <img 
+              src={lightboxImage.url} 
+              alt={lightboxImage.title} 
+              className="max-w-full max-h-[75vh] object-contain rounded-t-lg mx-auto" 
+            />
+            {/* Alt Bilgi Bandı */}
+            <div className="bg-black/60 backdrop-blur-sm p-4 text-white border-t border-white/10 w-full text-center">
+              <h4 className="font-serif text-lg font-bold tracking-wide">{lightboxImage.title}</h4>
+              <p className="text-xs text-white/60 mt-0.5">{lightboxImage.artist}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
